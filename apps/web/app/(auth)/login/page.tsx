@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@radix-ui/react-label";
-import { Sprout, ShoppingCart, ShieldCheck } from "lucide-react";
+import { Sprout, ShoppingCart, ShieldCheck, Truck } from "lucide-react";
 import { useRole } from "@/lib/use-role";
 import { LocationPicker } from "@/components/common/location-picker";
 
@@ -18,7 +18,7 @@ export default function LoginPage() {
     const [message, setMessage] = useState<string | null>(null);
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-    const handleLogin = async (e: React.FormEvent, role: "producer" | "buyer") => {
+    const handleLogin = async (e: React.FormEvent, role: "producer" | "buyer" | "transportador") => {
         e.preventDefault();
         setIsLoading(true);
         setRole(role);
@@ -37,7 +37,10 @@ export default function LoginPage() {
         setMessage(msg + "Redirecionando...");
 
         await new Promise((resolve) => setTimeout(resolve, 800));
-        router.push(role === "producer" ? "/dashboard" : "/comprador");
+
+        if (role === "producer") router.push("/dashboard");
+        else if (role === "buyer") router.push("/comprador");
+        else if (role === "transportador") router.push("/transportador");
     };
 
     return (
@@ -99,6 +102,14 @@ export default function LoginPage() {
                             disabled={isLoading}
                         >
                             <Sprout className="mr-2 h-4 w-4" /> Entrar como Produtor
+                        </Button>
+                        <Button
+                            type="button"
+                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 text-base"
+                            onClick={(e) => handleLogin(e, "transportador")}
+                            disabled={isLoading}
+                        >
+                            <Truck className="mr-2 h-4 w-4" /> Entrar como Transportador
                         </Button>
                         <Button
                             type="button"

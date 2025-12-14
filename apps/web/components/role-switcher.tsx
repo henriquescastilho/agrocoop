@@ -45,7 +45,7 @@ export function RoleSwitcher({ className, compact }: Props) {
                 </Badge>
             )}
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className={cn("grid gap-2", compact ? "grid-cols-1" : "grid-cols-3")}>
                 <Button
                     variant={activeRole === "producer" ? "agro" : "outline"}
                     className="w-full justify-center gap-2"

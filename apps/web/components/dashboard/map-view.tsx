@@ -10,7 +10,6 @@ interface MapViewProps {
     routes?: Array<Array<{ lat: number; lng: number }>>; // Array of paths
     overlays?: Array<{ lat: number; lng: number; radius: number; color: string }>;
     selectedMatchId?: string | null;
-    userLocation?: { lat: number; lng: number }; // New prop
     type?: "default" | "logistics"; // New prop
     className?: string; // New prop
     apiKey?: string; // New prop explicitly passed
@@ -57,7 +56,7 @@ const markerIcons: Record<"producer" | "buyer", google.maps.Symbol> = {
     },
 };
 
-export function MapView({ markers = [], routes = [], overlays = [], selectedMatchId, userLocation, type = "default", className, apiKey: propApiKey }: MapViewProps) {
+export function MapView({ markers = [], routes = [], overlays = [], selectedMatchId, type = "default", className, apiKey: propApiKey }: MapViewProps) {
     const apiKey = propApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
     const hasKey = apiKey.length > 0;
 
@@ -117,32 +116,32 @@ export function MapView({ markers = [], routes = [], overlays = [], selectedMatc
         setDirectionsService(new google.maps.DirectionsService());
     }, [isLoaded]);
 
-    // Fetch Route when Directions Service is ready (and if it's a logistics view)
+    // Fetch Route when Directions Service is ready and markers exist
     useEffect(() => {
-        if (!directionsService || !userLocation) return;
+        if (!directionsService || markers.length < 2) return;
 
-        // Example Route: User Location -> Rio de Janeiro (Mock Destination)
-        // In production, receive origin/dest as props
-        const origin = userLocation;
-        const destination = { lat: -22.9068, lng: -43.1729 }; // RJ Center
+        // Use markers to build route: Start -> [Waypoints] -> End
+        const origin = { lat: markers[0].lat, lng: markers[0].lng };
+        const destination = { lat: markers[markers.length - 1].lat, lng: markers[markers.length - 1].lng };
+
+        const waypoints = markers.slice(1, -1).map(m => ({
+            location: { lat: m.lat, lng: m.lng },
+            stopover: true
+        }));
 
         directionsService.route({
             origin: origin,
             destination: destination,
+            waypoints: waypoints,
             travelMode: google.maps.TravelMode.DRIVING,
         }, (result, status) => {
             if (status === google.maps.DirectionsStatus.OK && result && result.routes[0].overview_path) {
                 setDirectionsPath(result.routes[0].overview_path);
             } else {
                 console.error(`Directions request failed: ${status}`);
-                // Fallback to straight line if Directions fails or key invalid
-                setDirectionsPath([
-                    new google.maps.LatLng(origin.lat, origin.lng),
-                    new google.maps.LatLng(destination.lat, destination.lng)
-                ]);
             }
         });
-    }, [directionsService, userLocation]);
+    }, [directionsService, markers]);
 
     const routeOptions = useMemo(() => {
         if (typeof google === "undefined") return null;

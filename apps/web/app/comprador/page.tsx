@@ -154,11 +154,11 @@ export default function BuyerDashboardPage() {
                         />
                     </div>
                     <div className="pt-2 flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setShow CreateModal(false)} className="text-zinc-700 border-zinc-200 hover:bg-zinc-50">Cancelar</Button>
-                    <Button className="bg-agro-sky text-sky-950 hover:bg-agro-sky/90" onClick={handleCreateDemand}>Publicar Demanda</Button>
+                        <Button variant="outline" onClick={() => setShowCreateModal(false)} className="text-zinc-700 border-zinc-200 hover:bg-zinc-50">Cancelar</Button>
+                        <Button className="bg-agro-sky text-sky-950 hover:bg-agro-sky/90" onClick={handleCreateDemand}>Publicar Demanda</Button>
+                    </div>
                 </div>
+            </SimpleModal>
         </div>
-            </SimpleModal >
-        </div >
     );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Sprout, LayoutDashboard, Package, Settings, LogOut, PanelLeft, Shield } from "lucide-react";
+import { Sprout, LayoutDashboard, Package, Settings, LogOut, PanelLeft, Shield, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "@/components/role-switcher";
 import { useRole } from "@/lib/use-role";
@@ -86,6 +86,12 @@ export default function DashboardLayout({
                             Configurações
                         </Button>
                     </Link>
+                    <Button variant="ghost" className="w-full justify-start gap-3 text-agro-green hover:bg-agro-green/10 hover:text-agro-green" asChild>
+                        <a href="https://api.whatsapp.com/message/JG6NKORXWLUTP1?autoload=1&app_absent=0" target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="h-4 w-4" />
+                            Suporte WhatsApp
+                        </a>
+                    </Button>
                     <Link href="/login">
                         <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive">
                             <LogOut className="h-4 w-4" />

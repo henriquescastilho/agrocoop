@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingCart, LayoutDashboard, Store, Truck, Settings, LogOut, PanelLeft, PanelsTopLeft } from "lucide-react";
+import { ShoppingCart, LayoutDashboard, Store, Truck, Settings, LogOut, PanelLeft, PanelsTopLeft, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "@/components/role-switcher";
 import { useRole } from "@/lib/use-role";
@@ -84,6 +84,12 @@ export default function BuyerLayout({
                             Configurações
                         </Button>
                     </Link>
+                    <Button variant="ghost" className="w-full justify-start gap-3 text-agro-sky hover:bg-agro-sky/10 hover:text-agro-sky" asChild>
+                        <a href="https://api.whatsapp.com/message/JG6NKORXWLUTP1?autoload=1&app_absent=0" target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="h-4 w-4" />
+                            Suporte WhatsApp
+                        </a>
+                    </Button>
                     <Link href="/login">
                         <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive">
                             <LogOut className="h-4 w-4" />

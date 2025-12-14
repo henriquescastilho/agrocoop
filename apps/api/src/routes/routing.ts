@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { z } from "zod"; // Assuming zod is used in the project
 import { optimizeRoute } from "../routing/optimizer.js";
+import { aiOrchestrator } from "../ai/orchestrator.js";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ const optimizeSchema = z.object({
     end: pointSchema.optional() // If omitted, end = origin (round trip)
 });
 
-router.post("/optimize", (req, res) => {
+router.post("/optimize", async (req, res) => {
     const parsed = optimizeSchema.safeParse(req.body);
     if (!parsed.success) {
         return res.status(400).json({ error: "Invalid payload", issues: parsed.error.issues });
@@ -33,9 +34,13 @@ router.post("/optimize", (req, res) => {
             end: endPoint
         });
 
+        // Ask Gemini to analyze the route
+        const analysis = await aiOrchestrator.recommendRoute(result);
+
         res.json({
             status: "ok",
-            plan: result
+            plan: result,
+            analysis
         });
     } catch (err) {
         console.error("Routing error:", err);
