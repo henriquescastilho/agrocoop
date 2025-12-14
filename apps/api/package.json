@@ -4,11 +4,13 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
     "seed": "tsx src/seed.ts",
     "demo": "tsx src/demo.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "@prisma/adapter-better-sqlite3": "^7.1.0",
     "@prisma/client": "^7.1.0",
     "better-sqlite3": "^12.5.0",

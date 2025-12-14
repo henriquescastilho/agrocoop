@@ -17,7 +17,7 @@ export class AIOrchestrator {
     }
 
     async explainMatch(matchData: any): Promise<string> {
-        if (!apiKey) return "Integração com IA não configurada. Chave de API ausente.";
+        if (!this.model) return "Integração com IA não configurada. Chave de API ausente.";
 
         const prompt = `
       Você é um especialista em logística agrícola.
@@ -41,7 +41,7 @@ export class AIOrchestrator {
     }
 
     async recommendRoute(routePlan: any): Promise<string> {
-        if (!apiKey) return "Integração com IA não configurada.";
+        if (!this.model) return "Integração com IA não configurada.";
 
         const prompt = `
       Analise esta rota de logística para produtores rurais.
@@ -65,7 +65,7 @@ export class AIOrchestrator {
     }
 
     async analyzeSignals(signals: any): Promise<string> {
-        if (!apiKey) return "IA não disponível.";
+        if (!this.model) return "IA não disponível.";
 
         const prompt = `
       Analise estes sinais ambientais (alertas de desmatamento/clima).
@@ -89,7 +89,7 @@ export class AIOrchestrator {
      * Classifies the user's message into a structured intent.
      */
     async classifyIntent(text: string, context: any): Promise<{ intent: string; confidence: number; entities: any }> {
-        if (!apiKey) return { intent: "UNKNOWN", confidence: 0, entities: {} };
+        if (!this.model) return { intent: "UNKNOWN", confidence: 0, entities: {} };
 
         const prompt = `
             You are the brain of AgroCoop's WhatsApp Bot.
@@ -126,7 +126,7 @@ export class AIOrchestrator {
      * Composes a friendly, short response based on the intent and state.
      */
     async composeReply(intent: string, state: any): Promise<{ text: string; buttons?: string[] }> {
-        if (!apiKey) return { text: "Erro de configuração de IA.", buttons: [] };
+        if (!this.model) return { text: "Erro de configuração de IA.", buttons: [] };
 
         const prompt = `
             You are AgroCoop Bot. Be direct, professional, but friendly. No flowery language.
