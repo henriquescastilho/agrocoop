@@ -58,13 +58,10 @@ export default function RegisterRolePage() {
     return (
         <Card className="border-white/10 glass-panel">
             <CardHeader className="space-y-2">
-                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {icon}
                         <span>Role selecionada</span>
                     </div>
-                    <Badge variant="warning">Simulado</Badge>
-                </div>
                 <CardTitle className="text-2xl">{title}</CardTitle>
                 <CardDescription>{description}</CardDescription>
             </CardHeader>

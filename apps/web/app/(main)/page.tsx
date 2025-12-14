@@ -11,9 +11,13 @@ export default function LandingPage() {
     const router = useRouter();
     const { setRole } = useRole();
 
-    const goTo = (role: "producer" | "buyer") => {
+    const goTo = (role: "producer" | "buyer" | "transportador") => {
         setRole(role);
-        router.push(`/register/${role === "producer" ? "produtor" : "comprador"}`);
+        if (role === "transportador") {
+            router.push("/register/transportador");
+        } else {
+            router.push(`/register/${role === "producer" ? "produtor" : "comprador"}`);
+        }
     };
 
     return (
@@ -68,7 +72,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Role Selection Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-2">
 
                     {/* Card: Produtor */}
                     <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-white/10 to-white/0 hover:border-agro-green/50 transition-all duration-300 shadow-2xl">
@@ -104,6 +108,25 @@ export default function LandingPage() {
                         <CardContent className="relative">
                             <Button onClick={() => goTo("buyer")} className="w-full group-hover:bg-agro-sky group-hover:text-sky-950 transition-all" variant="outline">
                                 Entrar como Comprador <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card: Transportador */}
+                    <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-white/10 to-white/0 hover:border-agro-earth/50 transition-all duration-300 shadow-2xl">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(184,155,68,0.12),transparent_45%)]" />
+                        <CardHeader className="relative">
+                            <div className="h-12 w-12 rounded-lg bg-agro-earth/15 flex items-center justify-center mb-4 group-hover:bg-agro-earth/25 transition-colors">
+                                <Truck className="h-6 w-6 text-agro-earth" />
+                            </div>
+                            <CardTitle className="text-2xl">Sou Transportador</CardTitle>
+                            <CardDescription>
+                                Opero rotas, manifesto e comunicação em tempo real com produtores e compradores.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="relative">
+                            <Button onClick={() => goTo("transportador")} className="w-full group-hover:bg-agro-earth group-hover:text-agro-dark transition-all" variant="outline">
+                                Entrar como Transportador <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </CardContent>
                     </Card>

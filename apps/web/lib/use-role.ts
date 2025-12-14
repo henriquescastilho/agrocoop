@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export type UserRole = "producer" | "buyer";
+export type UserRole = "producer" | "buyer" | "transportador";
 
 const ROLE_STORAGE_KEY = "agrocoop:role";
 const ROLE_COOKIE = "agrocoop_role";
@@ -17,13 +17,13 @@ const readStoredRole = (): UserRole | null => {
     if (typeof window === "undefined") return null;
     try {
         const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
-        if (stored === "producer" || stored === "buyer") return stored;
+        if (stored === "producer" || stored === "buyer" || stored === "transportador") return stored as UserRole;
     } catch (err) {
         console.warn("[role] failed to read localStorage", err);
     }
 
     const cookieRole = getCookieValue(ROLE_COOKIE);
-    if (cookieRole === "producer" || cookieRole === "buyer") return cookieRole;
+    if (cookieRole === "producer" || cookieRole === "buyer" || cookieRole === "transportador") return cookieRole as UserRole;
 
     return null;
 };

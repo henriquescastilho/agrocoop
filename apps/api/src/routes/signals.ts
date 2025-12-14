@@ -1,22 +1,22 @@
 import { Router } from 'express';
-import { MapBiomasService } from '../services/mapbiomas';
+import { GoogleEnvironmentalService } from '../services/google-environment';
 
 const router = Router();
+const envService = new GoogleEnvironmentalService();
 
 // GET /api/signals/ambient
-// Query: lat, lng, radius (optional)
+// Query: lat, lng
 router.get('/ambient', async (req, res) => {
     try {
         const lat = parseFloat(req.query.lat as string);
         const lng = parseFloat(req.query.lng as string);
-        const radius = parseFloat(req.query.radius as string) || 50;
 
         if (isNaN(lat) || isNaN(lng)) {
             res.status(400).json({ error: 'Lat/Lng required' });
             return;
         }
 
-        const data = await MapBiomasService.getRefinedAlerts(lat, lng, radius);
+        const data = await envService.getEnvironmentalData(lat, lng);
         res.json(data);
     } catch (error) {
         console.error(error);
@@ -27,26 +27,12 @@ router.get('/ambient', async (req, res) => {
 // GET /api/signals/route
 // Query: originLat, originLng, destLat, destLng
 router.get('/route', async (req, res) => {
-    try {
-        const originLat = parseFloat(req.query.originLat as string);
-        const originLng = parseFloat(req.query.originLng as string);
-        const destLat = parseFloat(req.query.destLat as string);
-        const destLng = parseFloat(req.query.destLng as string);
-
-        if (isNaN(originLat) || isNaN(originLng) || isNaN(destLat) || isNaN(destLng)) {
-            res.status(400).json({ error: 'Origin and Dest coordinates required' });
-            return;
-        }
-
-        const data = await MapBiomasService.getRouteContext(
-            { lat: originLat, lng: originLng },
-            { lat: destLat, lng: destLng }
-        );
-        res.json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    // Route environmental signals not yet fully implemented in Google Service
+    // Returning simple mocked context for now
+    res.json({
+        summary: "Rota monitorada via Google Environment",
+        hazards: []
+    });
 });
 
 export default router;

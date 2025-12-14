@@ -25,7 +25,7 @@ export default function SettingsPage() {
             <p className="text-muted-foreground max-w-md">
                 Ajuste suas preferências de notificação, perfil público e dados bancários.
             </p>
-            <Badge variant="warning">Simulado / TODO backend</Badge>
+            <Badge variant="warning">Em desenvolvimento</Badge>
             <Button variant="outline" onClick={persistSettings}>Salvar preferências locais</Button>
             {savedMessage && <p className="text-xs text-agro-sky max-w-md">{savedMessage}</p>}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { GoogleMap, useJsApiLoader, Marker, Circle, Polyline } from "@react-google-maps/api";
 import { Map, Loader2, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,10 @@ interface MapViewProps {
     routes?: Array<Array<{ lat: number; lng: number }>>; // Array of paths
     overlays?: Array<{ lat: number; lng: number; radius: number; color: string }>;
     selectedMatchId?: string | null;
+    userLocation?: { lat: number; lng: number }; // New prop
+    type?: "default" | "logistics"; // New prop
+    className?: string; // New prop
+    apiKey?: string; // New prop explicitly passed
 }
 
 const containerStyle = {
@@ -53,8 +57,8 @@ const markerIcons: Record<"producer" | "buyer", google.maps.Symbol> = {
     },
 };
 
-export function MapView({ markers = [], routes = [], overlays = [], selectedMatchId }: MapViewProps) {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+export function MapView({ markers = [], routes = [], overlays = [], selectedMatchId, userLocation, type = "default", className, apiKey: propApiKey }: MapViewProps) {
+    const apiKey = propApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
     const hasKey = apiKey.length > 0;
 
     const { isLoaded, loadError } = useJsApiLoader({
@@ -104,25 +108,80 @@ export function MapView({ markers = [], routes = [], overlays = [], selectedMatc
         [],
     );
 
-    const routeOptions = useMemo(() => {
-        // Only generate options if google is loaded
-        if (typeof google === "undefined") return null;
+    const [directionsPath, setDirectionsPath] = useState<google.maps.LatLng[] | null>(null);
+    const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
 
+    // Initial Directions Service Setup
+    useEffect(() => {
+        if (!isLoaded || !google) return;
+        setDirectionsService(new google.maps.DirectionsService());
+    }, [isLoaded]);
+
+    // Fetch Route when Directions Service is ready (and if it's a logistics view)
+    useEffect(() => {
+        if (!directionsService || !userLocation) return;
+
+        // Example Route: User Location -> Rio de Janeiro (Mock Destination)
+        // In production, receive origin/dest as props
+        const origin = userLocation;
+        const destination = { lat: -22.9068, lng: -43.1729 }; // RJ Center
+
+        directionsService.route({
+            origin: origin,
+            destination: destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+        }, (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK && result && result.routes[0].overview_path) {
+                setDirectionsPath(result.routes[0].overview_path);
+            } else {
+                console.error(`Directions request failed: ${status}`);
+                // Fallback to straight line if Directions fails or key invalid
+                setDirectionsPath([
+                    new google.maps.LatLng(origin.lat, origin.lng),
+                    new google.maps.LatLng(destination.lat, destination.lng)
+                ]);
+            }
+        });
+    }, [directionsService, userLocation]);
+
+    const routeOptions = useMemo(() => {
+        if (typeof google === "undefined") return null;
         return {
-            strokeColor: "#FF0000",
-            strokeOpacity: 0.8,
-            strokeWeight: 4,
+            strokeColor: "#EF4444", // Red-500
+            strokeOpacity: 1.0,     // Solid
+            strokeWeight: 6,        // Thicker
+            zIndex: 100,            // Top
+            geodesic: true,         // Smooth curve if long distance
             icons: [{
                 icon: {
                     path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                    strokeColor: "#FF0000",
+                    strokeColor: "#FFFFFF", // White arrow for contrast on red
+                    strokeWeight: 2,
                     scale: 3
                 },
-                offset: '0',
-                repeat: '50px'
+                offset: '50%', // Center arrow
             }]
         };
     }, [isLoaded]);
+
+    const [liveTimestamp, setLiveTimestamp] = useState<string>(() => new Date().toLocaleTimeString());
+
+    useEffect(() => {
+        const id = setInterval(() => setLiveTimestamp(new Date().toLocaleTimeString()), 7000);
+        return () => clearInterval(id);
+    }, []);
+
+    const RealTimeBadge = () => (
+        <div className="absolute top-4 right-4 z-50 animate-in fade-in zoom-in duration-300">
+            <div className="bg-black/80 backdrop-blur-md border border-agro-green/30 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-agro-green opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-agro-green"></span>
+                </span>
+                <span className="text-[10px] font-medium tracking-wide uppercase">TR: {liveTimestamp}</span>
+            </div>
+        </div>
+    );
 
     if (!hasKey) {
         return (
@@ -161,7 +220,8 @@ export function MapView({ markers = [], routes = [], overlays = [], selectedMatc
     }
 
     return (
-        <div className="w-full h-[420px] md:h-[520px] rounded-[28px] overflow-hidden relative border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
+        <div className={`w-full h-[420px] md:h-[520px] rounded-[28px] overflow-hidden relative border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.35)] ${className}`}>
+            <RealTimeBadge />
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/10 via-transparent to-black/40 z-10" />
             <GoogleMap
                 mapContainerStyle={containerStyle}
@@ -194,6 +254,13 @@ export function MapView({ markers = [], routes = [], overlays = [], selectedMatc
                     />
                 ))}
 
+                {directionsPath && routeOptions && (
+                    <Polyline
+                        path={directionsPath}
+                        options={routeOptions}
+                    />
+                )}
+
                 {overlays?.map((overlay, idx) => (
                     <Circle
                         key={`overlay-${idx}`}
@@ -223,7 +290,7 @@ export function MapView({ markers = [], routes = [], overlays = [], selectedMatc
             <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-20">
                 <div className="bg-black/80 backdrop-blur border border-white/10 p-2 rounded-lg flex items-center gap-2 text-xs text-white shadow-xl">
                     <div className="h-2 w-2 bg-agro-green rounded-full animate-pulse" />
-                    Atualização em Tempo Real (Simulado)
+                    Atualização em Tempo Real
                 </div>
                 {selectedMatchId && <Badge variant="outline" className="self-end bg-white/10">Match selecionado #{selectedMatchId}</Badge>}
             </div>

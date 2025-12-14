@@ -15,7 +15,7 @@ export type ConversationStep =
 
 export type UserContext = {
     phone: string;
-    role: "producer" | "buyer" | "unknown";
+    role: "producer" | "buyer" | "transportador" | "admin" | "unknown";
     step: ConversationStep;
     draft: any;
     name?: string;

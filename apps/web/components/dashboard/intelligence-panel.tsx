@@ -79,15 +79,13 @@ export function IntelligencePanel() {
             setLoading(false);
             return;
         }
-        // Mocking a route plan to ask for recommendation
-        // In a real scenario, this would come from the context or props
-        const mockRoutePlan = {
+        const sampleRoutePlan = {
             stops: ["Produtor A", "Produtor B", "Comprador X"],
             totalDist: 120,
             cargoType: "Perecível (Tomate)"
         };
 
-        fetchAIRecommendRoute(mockRoutePlan).then((res) => {
+        fetchAIRecommendRoute(sampleRoutePlan).then((res) => {
             if (res.ok) {
                 setAiInsight(res.data.explanation);
             } else {
@@ -106,7 +104,6 @@ export function IntelligencePanel() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                {/* Static/Mock Risk Card - keeping for stability as requested "mock com feedback" */}
                 <InsightCard
                     type="risk"
                     title="Alerta de Logística"

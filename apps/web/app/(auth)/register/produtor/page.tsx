@@ -7,23 +7,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-shim"; // Placeholder for shim
-import { MapPin, Sprout, Truck, CheckCircle2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, Sprout } from "lucide-react";
 import { useRole } from "@/lib/use-role";
+import { createUser } from "@/lib/api";
+
+const PHONE_MASK_HINT = "(DDD + número com WhatsApp)";
 
 export default function RegisterProducerPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const { setRole } = useRole("producer");
+    const [name, setName] = useState("");
+    const [whatsApp, setWhatsApp] = useState("");
+    const [email, setEmail] = useState("");
+    const [farmName, setFarmName] = useState("");
+    const [city, setCity] = useState("");
+    const [state, setState] = useState("");
+    const [plantation, setPlantation] = useState("Tomate");
+    const [otherPlantation, setOtherPlantation] = useState("");
+    const [windowText, setWindowText] = useState("");
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setMessage(null);
+
+        if (!whatsApp.trim()) {
+            setMessage("Informe um número de WhatsApp válido.");
+            setIsLoading(false);
+            return;
+        }
+
+        const payload = {
+            role: "producer" as const,
+            name: name || "Produtor",
+            phone: whatsApp,
+            email: email || undefined,
+        };
+
+        const res = await createUser(payload);
+        if (!res.ok) {
+            setMessage(`Erro ao salvar: ${res.error}`);
+            setIsLoading(false);
+            return;
+        }
+
         setRole("producer");
-        setMessage("Cadastro mockado. Role salvo em cookie/localStorage. Próximo: enviar para API.");
-        await new Promise((resolve) => setTimeout(resolve, 1500));
         router.push("/dashboard");
     };
 
@@ -41,24 +71,20 @@ export default function RegisterProducerPage() {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleRegister} className="space-y-6">
-                    <Badge variant="warning">Simulado</Badge>
-
                     {/* Section 1: Identity */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground uppercase border-b border-white/10 pb-2">1. Seus Dados</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nome Completo</Label>
-                                <Input id="name" placeholder="Ex: João da Silva" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="doc">CPF</Label>
-                                <Input id="doc" placeholder="000.000.000-00" required />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Nome Completo</Label>
+                            <Input id="name" placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} required />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">Celular ou E-mail</Label>
-                            <Input id="email" type="text" placeholder="(21) 99999-9999" required />
+                            <Label htmlFor="whatsapp">WhatsApp (obrigatório)</Label>
+                            <Input id="whatsapp" placeholder={PHONE_MASK_HINT} value={whatsApp} onChange={(e) => setWhatsApp(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">E-mail (opcional)</Label>
+                            <Input id="email" type="email" placeholder="contato@sitio.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
                     </div>
 
@@ -70,16 +96,16 @@ export default function RegisterProducerPage() {
                         </h3>
                         <div className="space-y-2">
                             <Label htmlFor="farm-name">Nome do Local</Label>
-                            <Input id="farm-name" placeholder="Ex: Sítio Esperança" required />
+                            <Input id="farm-name" placeholder="Ex: Sítio Esperança" value={farmName} onChange={(e) => setFarmName(e.target.value)} required />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="city">Cidade</Label>
-                                <Input id="city" placeholder="Ex: Teresópolis" required />
+                                <Input id="city" placeholder="Ex: Teresópolis" value={city} onChange={(e) => setCity(e.target.value)} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="state">Estado</Label>
-                                <Input id="state" placeholder="RJ" required />
+                                <Input id="state" placeholder="RJ" value={state} onChange={(e) => setState(e.target.value)} required />
                             </div>
                         </div>
                     </div>
@@ -88,21 +114,27 @@ export default function RegisterProducerPage() {
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground uppercase border-b border-white/10 pb-2">3. O que você planta?</h3>
                         <div className="space-y-2">
-                            <Label>Marque o que você tem:</Label>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                <label className="flex items-center gap-2 p-2 rounded border border-white/10 bg-white/5 cursor-pointer hover:border-agro-green/50">
-                                    <input type="checkbox" className="accent-agro-green" /> Tomate
-                                </label>
-                                <label className="flex items-center gap-2 p-2 rounded border border-white/10 bg-white/5 cursor-pointer hover:border-agro-green/50">
-                                    <input type="checkbox" className="accent-agro-green" /> Verduras
-                                </label>
-                                <label className="flex items-center gap-2 p-2 rounded border border-white/10 bg-white/5 cursor-pointer hover:border-agro-green/50">
-                                    <input type="checkbox" className="accent-agro-green" /> Frutas
-                                </label>
-                                <label className="flex items-center gap-2 p-2 rounded border border-white/10 bg-white/5 cursor-pointer hover:border-agro-green/50">
-                                    <input type="checkbox" className="accent-agro-green" /> Aipim/Batata
-                                </label>
-                            </div>
+                            <Label htmlFor="plantation">Plantação principal</Label>
+                            <select
+                                id="plantation"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                value={plantation}
+                                onChange={(e) => setPlantation(e.target.value)}
+                            >
+                                <option>Tomate</option>
+                                <option>Verduras</option>
+                                <option>Frutas</option>
+                                <option>Raízes</option>
+                                <option>Grãos</option>
+                                <option>Outros</option>
+                            </select>
+                            {plantation === "Outros" && (
+                                <Input placeholder="Descreva sua plantação" value={otherPlantation} onChange={(e) => setOtherPlantation(e.target.value)} required />
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="window">Janela de colheita / volume</Label>
+                            <Input id="window" placeholder="Ex: 15/10 a 20/10 • 500kg" value={windowText} onChange={(e) => setWindowText(e.target.value)} />
                         </div>
                     </div>
 

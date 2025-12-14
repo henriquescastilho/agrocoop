@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Sprout, LayoutDashboard, Map, Package, Settings, LogOut, PanelLeft, Shield } from "lucide-react";
+import { Sprout, LayoutDashboard, Package, Settings, LogOut, PanelLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "@/components/role-switcher";
 import { useRole } from "@/lib/use-role";
@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 const navItems = [
     { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
     { href: "/dashboard/produtores", label: "Minha Produção", icon: Sprout },
-    { href: "/dashboard/logistica", label: "Logística (Coletas)", icon: Map },
     { href: "/dashboard/pedidos", label: "Pedidos & Matches", icon: Package },
 ];
 
@@ -28,8 +27,11 @@ export default function DashboardLayout({
     const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
-        if (hydrated && role === "buyer") {
+        if (!hydrated) return;
+        if (role === "buyer") {
             router.replace("/comprador");
+        } else if (role === "transportador") {
+            router.replace("/transportador");
         }
     }, [hydrated, role, router]);
 

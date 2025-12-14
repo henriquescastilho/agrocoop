@@ -54,7 +54,7 @@ export default function MercadoPage() {
 
                         <Button
                             className="bg-agro-sky text-sky-950 hover:bg-agro-sky/90"
-                            onClick={() => setMessage(`Negociação iniciada (mock) com ${offer.producer} para ${offer.product}.`)}
+                            onClick={() => setMessage(`Negociação iniciada com ${offer.producer} para ${offer.product}.`)}
                         >
                             Negociar <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>

@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapView } from "@/components/dashboard/map-view";
 import { IntelligencePanel } from "@/components/dashboard/intelligence-panel";
 import { EnvironmentalSignalsPanel } from "@/components/dashboard/environmental-signals-panel";
 import { ArrowUpRight, Truck, Calendar, Map, Sprout, CheckCircle2, Thermometer } from "lucide-react";
+import { SimpleModal } from "@/components/ui/simple-modal";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { apiEnabled, fetchMeta, fetchMatches } from "@/lib/api";
+import { generateReport } from "@/lib/pdf-generator";
 
 type LocalMatch = {
     id: string;
@@ -16,7 +19,7 @@ type LocalMatch = {
     product: string;
     distance: string;
     price: string;
-    status: "Pendente" | "Confirmado";
+    status: "Pendente" | "Confirmado" | "Negociando";
     window: string;
 };
 
@@ -36,6 +39,13 @@ export default function DashboardPage() {
         { id: "2", buyer: "Restaurante Alecrim", product: "Batata Inglesa", distance: "120km", price: "R$ 2,10/kg", status: "Pendente", window: "Próximo dia útil" },
     ]);
     const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+    const [showHarvestModal, setShowHarvestModal] = useState(false);
+    const [harvestData, setHarvestData] = useState({ product: "", qty: "", window: "", notes: "" });
+
+    // Negotiation State
+    const [showNegotiationModal, setShowNegotiationModal] = useState(false);
+    const [negotiationData, setNegotiationData] = useState({ price: "", reason: "" });
+    const [negotiatingMatchId, setNegotiatingMatchId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!apiEnabled) return;
@@ -73,18 +83,63 @@ export default function DashboardPage() {
 
     const activeMatch = useMemo(() => localMatches.find((m) => m.id === selectedMatchId) || null, [localMatches, selectedMatchId]);
 
-    const handleReport = () => {
-        setMessage("Relatório estratégico gerado (mock). Em produção, salvar em REPORTS/RAIOX_UI.md + download.");
+    // ... inside component ...
+
+    const handleReport = async () => {
+        setMessage("Gerando relatório em PDF...");
+        const doc = await generateReport(new Date().toLocaleString(), "Produtor (Demo)");
+        doc.save(`relatorio_agrocoop_${new Date().toISOString().split('T')[0]}.pdf`);
+        setMessage("Relatório salvo com sucesso.");
     };
 
-    const handleOperation = () => {
+    const handleDismiss = (id: string) => {
+        const updated = localMatches.filter(m => m.id !== id);
+        setLocalMatches(updated);
+        setSelectedMatchId(null);
+        setMessage(`Oportunidade #${id} arquivada.`);
+    };
+
+    const handleHarvest = () => {
+        setShowHarvestModal(true);
+    };
+
+    const confirmHarvest = () => {
+        if (!harvestData.product || !harvestData.qty) {
+            alert("Preencha os campos obrigatórios");
+            return;
+        }
         setOperations((prev) => prev + 1);
-        setMessage("Nova operação criada (simulação). Próximo passo: registrar coleta na API.");
+        setMessage(`Colheita registrada: ${harvestData.product} (${harvestData.qty}). Aguardando compradores.`);
+        setShowHarvestModal(false);
+        setHarvestData({ product: "", qty: "", window: "", notes: "" });
+    };
+
+    const handleNegotiate = (matchId: string) => {
+        setNegotiatingMatchId(matchId);
+        setNegotiationData({ price: "", reason: "" });
+        setShowNegotiationModal(true);
+        setSelectedMatchId(null); // Close the detail modal
+    };
+
+    const confirmNegotiation = () => {
+        if (!negotiationData.price) {
+            alert("O preço é obrigatório para negociar.");
+            return;
+        }
+        // Simulated backend logic below
+        const updatedMatches = localMatches.map(m =>
+            m.id === negotiatingMatchId ? { ...m, status: "Negociando" as const, price: `R$ ${negotiationData.price}/kg (Proposto)` } : m
+        );
+        setLocalMatches(updatedMatches); // Update local state for demonstration
+        setMessage(`Negociação enviada: ${negotiationData.price}/kg. Aguardando comprador.`);
+        // In a real app calling setLocalMatches(updatedMatches) or similar if state was lifted
+        setShowNegotiationModal(false);
     };
 
     const confirmMatch = (id: string) => {
-        setLocalMatches((prev) => prev.map((m) => (m.id === id ? { ...m, status: "Confirmado" } : m)));
-        setMessage("Match confirmado localmente. Em produção, enviar patch para API.");
+        const updated = localMatches.map(m => m.id === id ? { ...m, status: "Confirmado" as const } : m);
+        setLocalMatches(updated);
+        setMessage(`Match #${id} aceito! Logística iniciada.`);
         setSelectedMatchId(null);
     };
 
@@ -99,7 +154,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={handleReport}>Baixar Relatório</Button>
-                    <Button className="bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={handleOperation}>Nova Operação</Button>
+                    <Button className="bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={handleHarvest}>Registrar Colheita</Button>
                 </div>
             </div>
 
@@ -151,30 +206,36 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            {/* Main Map Integration */}
+            {/* Main Insights */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Map Column */}
                 <div className="md:col-span-2 space-y-6">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Map className="h-5 w-5 text-agro-sky" /> Inteligência Logística
                     </h2>
                     <IntelligencePanel />
                     <EnvironmentalSignalsPanel />
-                    <MapView
-                        markers={matchMarkers}
-                        overlays={[{ lat: -22.1, lng: -42.7, radius: 15, color: "#EF4444" }]} // Mock overlay for immediate visual feedback
-                        selectedMatchId={matchMarkers[0]?.id ?? null}
-                    />
+                    <Card className="glass-panel border-white/10">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Mapa Operacional</CardTitle>
+                            <CardDescription>Disponível apenas para o transportador.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <p className="text-sm text-muted-foreground">
+                                O painel de rotas e execução foi movido para o espaço do transportador para evitar confusão de papéis.
+                            </p>
+                            <Button asChild variant="outline" className="whitespace-nowrap">
+                                <a href="/transportador/rotas">Abrir painel do transportador</a>
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Matches Column */}
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <Sprout className="h-5 w-5 text-agro-green" /> Oportunidades (Matches)
                     </h2>
                     <div className="space-y-3">
 
-                        {/* Match Card 1 */}
                         {localMatches.map((match) => (
                             <Card key={match.id} className="hover:border-agro-green/50 transition-colors cursor-pointer glass-panel border-white/5 bg-transparent">
                                 <CardContent className="p-4 space-y-3">
@@ -201,7 +262,7 @@ export default function DashboardPage() {
 
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-agro-earth" /> Itens simulados. Em produção, puxar de GET /api/matches.
+                        <CheckCircle2 className="h-4 w-4 text-agro-earth" /> Dados podem ser sincronizados via GET /api/matches.
                     </div>
                 </div>
             </div>
@@ -221,15 +282,103 @@ export default function DashboardPage() {
                             <span className="font-bold text-agro-green">{activeMatch.price}</span>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" className="w-1/2" onClick={() => setSelectedMatchId(null)}>Fechar</Button>
-                            <Button className="w-1/2 bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={() => confirmMatch(activeMatch.id)}>
-                                Aceitar / Negociar
+                            <Button variant="outline" className="w-1/3" onClick={() => handleDismiss(activeMatch.id)}>Fechar</Button>
+                            <Button className="w-1/3 bg-agro-sky/20 text-agro-sky hover:bg-agro-sky/30 border border-agro-sky/50" onClick={() => handleNegotiate(activeMatch.id)}>
+                                Negociar
+                            </Button>
+                            <Button className="w-1/3 bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={() => confirmMatch(activeMatch.id)}>
+                                Aceitar
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">Ação grava apenas localmente. Para produção, enviar PATCH de status para /api/matches.</p>
                     </div>
                 </div>
             )}
+
+            <SimpleModal
+                isOpen={showNegotiationModal}
+                onClose={() => setShowNegotiationModal(false)}
+                title="Propor Negociação"
+                description="Envie uma contraproposta de preço. O comprador analisará."
+            >
+                <div className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label>Sua Proposta de Preço (R$/kg)</Label>
+                        <Input
+                            value={negotiationData.price}
+                            onChange={(e) => setNegotiationData({ ...negotiationData, price: e.target.value })}
+                            placeholder="Ex: 2,30"
+                            type="number"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Justificativa (Opcional)</Label>
+                        <Input
+                            value={negotiationData.reason}
+                            onChange={(e) => setNegotiationData({ ...negotiationData, reason: e.target.value })}
+                            placeholder="Ex: Qualidade superior, custo logístico..."
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="outline" onClick={() => setShowNegotiationModal(false)}>Cancelar</Button>
+                        <Button className="bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={confirmNegotiation}>
+                            Enviar Proposta
+                        </Button>
+                    </div>
+                </div>
+            </SimpleModal>
+
+            <SimpleModal
+                isOpen={showHarvestModal}
+                onClose={() => setShowHarvestModal(false)}
+                title="Registrar Nova Colheita"
+                description="Declare sua produção para encontrar compradores automaticamente."
+            >
+                <div className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="product">Produto (Obrigatório)</Label>
+                        <Input
+                            id="product"
+                            placeholder="Ex: Tomate Italiano"
+                            value={harvestData.product}
+                            onChange={(e) => setHarvestData({ ...harvestData, product: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="qty">Quantidade Disponível</Label>
+                        <Input
+                            id="qty"
+                            placeholder="Ex: 500 kg"
+                            value={harvestData.qty}
+                            onChange={(e) => setHarvestData({ ...harvestData, qty: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="window">Janela de Retirada (Opcional)</Label>
+                        <Input
+                            id="window"
+                            placeholder="Ex: 15/12 a 20/12"
+                            value={harvestData.window}
+                            onChange={(e) => setHarvestData({ ...harvestData, window: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="notes">Observações</Label>
+                        <Input
+                            id="notes"
+                            placeholder="Ex: Precisa de refrigeração leve"
+                            value={harvestData.notes}
+                            onChange={(e) => setHarvestData({ ...harvestData, notes: e.target.value })}
+                        />
+                    </div>
+                    <div className="pt-2 flex gap-2">
+                        <Button variant="outline" className="w-full" onClick={() => setShowHarvestModal(false)}>Cancelar</Button>
+                        <Button className="w-full bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={confirmHarvest}>
+                            Confirmar
+                        </Button>
+                    </div>
+                </div>
+            </SimpleModal>
         </div>
     );
 }

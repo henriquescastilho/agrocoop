@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
-import { transcribeAudio } from '../speech/transcribe';
-import { getState, updateState, resetState } from './state';
-import { waha } from './waha';
-import { AIOrchestrator } from '../ai/orchestrator';
-
-const ai = new AIOrchestrator();
+import { getState, updateState, resetState } from './state.js';
+import { waha } from './waha.js';
+import { orchestrateConversation } from '../ai/conversation-orchestrator.js';
+import { transcribeAudio } from '../speech/transcribe.js';
+import { synthesizeText } from '../speech/synthesize.js';
+import { prisma } from '../prisma.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Webhook Handler
 export async function handleWhatsAppWebhook(req: Request, res: Response) {
@@ -24,27 +26,42 @@ export async function handleWhatsAppWebhook(req: Request, res: Response) {
         }
 
         const phone = data.from; // e.g. 5521999999999@c.us
+        const messageId = data.id || data.key?.id || data.messageId || `${phone}-${data.timestamp || Date.now()}`;
+
+        // Idempotência básica
+        const duplicate = await prisma.event.findFirst({ where: { type: "whatsapp_inbound", payload: { contains: messageId } } });
+        if (duplicate) {
+            return res.sendStatus(200);
+        }
 
         // 1. Get Conversation State
         const state = await getState(phone);
+        const currentDraft = state.draft || {};
         //console.log(`[WAHA] State for ${phone}: ${state.step} (${state.role})`);
 
         // 2. Extract Input (Text or Audio)
         let inputText = "";
+        const userSentAudio = !!(data.hasMedia && (data.mimetype || "").includes("audio"));
+
+        // Persist whether the conversation started with audio (only set on first message)
+        if (typeof currentDraft.startedWithAudio === "undefined" && state.step === "START") {
+            const updatedDraft = { ...currentDraft, startedWithAudio: userSentAudio };
+            await updateState(phone, { draft: updatedDraft });
+            state.draft = updatedDraft;
+        }
 
         // Handle Audio
         if (data.hasMedia && (data.mimetype || "").includes("audio")) {
-            // Check for mediaUrl directly in payload (WAHA config dependent)
-            // or download via WAHA API if strictly fileId. 
-            // Assuming payload contains a public URL or valid WAHA url (data.mediaUrl or data.body if base64? simplistic assumption for MVP: url provided)
             const audioUrl = data.mediaUrl || data._data?.mediaUrl;
             if (audioUrl) {
-                await waha.sendText(phone, "🎧 Ouvindo seu áudio...");
-                const transcription = await transcribeAudio(audioUrl);
+                await waha.sendText(phone, "🎧 Recebi seu áudio, transcrevendo...");
+                const audioRes = await fetch(audioUrl);
+                const buf = Buffer.from(await audioRes.arrayBuffer());
+                const transcription = await transcribeAudio(buf, data.mimetype || "audio/ogg");
                 if (transcription) {
-                    inputText = transcription;
+                    inputText = transcription.text;
                 } else {
-                    await waha.sendText(phone, "Desculpe, não consegui entender o áudio. Pode escrever?");
+                    await waha.sendText(phone, "Não consegui entender o áudio. Pode enviar novamente ou digitar?");
                     return res.sendStatus(200);
                 }
             }
@@ -64,72 +81,64 @@ export async function handleWhatsAppWebhook(req: Request, res: Response) {
 
         console.log(`[WAHA] Input from ${phone}: "${inputText}"`);
 
-        // 3. AI Intent Classification
-        const classification = await ai.classifyIntent(inputText, state);
-        console.log(`[AI] Intent: ${classification.intent} (${classification.confidence})`);
+        // Persist inbound event
+        await prisma.event.create({
+            data: {
+                type: "whatsapp_inbound",
+                payload: JSON.stringify({ phone, messageId, inputText, raw: data }),
+            },
+        });
 
-        // 4. State Machine Logic (Simplified)
-        let nextStep = state.step;
-        let response = { text: "", buttons: [] as string[] };
+        // 3. Orchestrate with Gemini
+        const aiResponse = await orchestrateConversation({
+            phone,
+            role: state.role,
+            step: state.step,
+            text: inputText,
+            draft: state.draft,
+        });
 
-        // --- LOGIC START ---
+        const nextButtons = aiResponse.buttons?.length ? aiResponse.buttons : [{ id: "menu", label: "Menu" }];
+        await updateState(phone, { step: aiResponse.nextStep as any, draft: state.draft });
 
-        // RESET / HELP
-        if (classification.intent === "HELP" || inputText.toLowerCase() === "/reset") {
-            nextStep = "START";
-            await resetState(phone);
-            response = {
-                text: "Reiniciando. Olá! Eu sou a AgroCoop. Como posso ajudar?",
-                buttons: ["Sou Produtor", "Sou Comprador"]
-            };
+        // 4. Send Response (text or audio)
+        const wantsAudio = (data.hasMedia && (data.mimetype || "").includes("audio")) || aiResponse.replyText.length > 400;
+        let sentAudio = false;
+
+        if (wantsAudio) {
+            const audioBase64 = await synthesizeText(aiResponse.replyText);
+            if (audioBase64) {
+                const buf = Buffer.from(audioBase64, "base64");
+                await waha.sendAudioBuffer(phone, buf);
+                sentAudio = true;
+            }
         }
 
-        // START -> ROLE
-        else if (state.step === "START") {
-            if (classification.intent === "REGISTER_ROLE") {
-                // AI likely found entities or context implies role
-                const role = inputText.toLowerCase().includes("produtor") ? "producer" : "buyer";
-                await updateState(phone, { role, step: "MAIN_MENU" });
-                response = {
-                    text: `Perfeito! Você foi registrado como ${role === "producer" ? "Produtor" : "Comprador"}. O que deseja fazer?`,
-                    buttons: role === "producer" ? ["Ofertar Produto", "Ver Demandas"] : ["Criar Pedido", "Ver Ofertas"]
-                };
+        if (!sentAudio) {
+            if (nextButtons?.length) {
+                await waha.sendButtons(phone, aiResponse.replyText, nextButtons.map((b) => b.label));
             } else {
-                response = await ai.composeReply("GREETING", state); // generic
+                // attach logo (one-time per START) if available
+                const logoPath = process.env.LOGO_PATH || "logo.png";
+                if (state.step === "START" && fs.existsSync(logoPath)) {
+                    try {
+                        const base64 = fs.readFileSync(logoPath).toString("base64");
+                        await waha.sendImage(phone, "Agroboy", { base64, filename: path.basename(logoPath), mimetype: "image/png" });
+                    } catch (err) {
+                        console.warn("[WAHA] Falha ao enviar logo:", err);
+                    }
+                }
+                await waha.sendText(phone, aiResponse.replyText);
             }
         }
 
-        // MAIN MENU
-        else if (state.step === "MAIN_MENU") {
-            if (classification.intent === "OFFER_PRODUCT") {
-                await updateState(phone, { step: "OFFER_PRODUCT" });
-                response = { text: "Qual produto você quer ofertar? (Ex: Tomate, Alface)", buttons: [] };
-            }
-            else if (classification.intent === "CREATE_DEMAND") {
-                await updateState(phone, { step: "DEMAND_PRODUCT" });
-                response = { text: "O que você precisa comprar hoje?", buttons: [] };
-            }
-            else {
-                response = await ai.composeReply(classification.intent, state);
-            }
-        }
-
-        // Fallback catch-all via AI
-        if (!response.text) {
-            response = await ai.composeReply(classification.intent, state);
-        }
-
-        // --- LOGIC END ---
-
-        // 5. Send Response
-        if (response.buttons && response.buttons.length > 0) {
-            await waha.sendButtons(phone, response.text, response.buttons);
-        } else {
-            await waha.sendText(phone, response.text);
-        }
-
-        // Update DB
-        // (Step updates happen inside logic blocks above via updateState)
+        // Log outbound
+        await prisma.event.create({
+            data: {
+                type: "whatsapp_outbound",
+                payload: JSON.stringify({ phone, messageId, reply: aiResponse }),
+            },
+        });
 
         return res.sendStatus(200);
 

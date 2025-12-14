@@ -20,10 +20,10 @@ const buttonVariants = cva(
                 agro: "bg-agro-green text-agro-dark hover:bg-agro-green/90 font-bold shadow-lg shadow-agro-green/20",
             },
             size: {
-                default: "h-10 px-4 py-2",
-                sm: "h-9 rounded-md px-3",
-                lg: "h-11 rounded-md px-8 text-base",
-                icon: "h-10 w-10",
+                default: "h-9 px-4 py-2 text-sm", // Reduced from h-10
+                sm: "h-8 rounded-md px-3 text-xs", // Reduced from h-9
+                lg: "h-10 rounded-md px-6 text-sm", // Reduced from h-11
+                icon: "h-9 w-9", // Reduced from h-10
             },
         },
         defaultVariants: {

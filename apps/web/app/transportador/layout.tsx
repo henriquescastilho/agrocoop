@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingCart, LayoutDashboard, Store, Truck, Settings, LogOut, PanelLeft, PanelsTopLeft } from "lucide-react";
+import { LayoutDashboard, Map, ClipboardList, Truck, Settings, LogOut, PanelLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "@/components/role-switcher";
 import { useRole } from "@/lib/use-role";
@@ -11,27 +11,25 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-    { href: "/comprador", label: "Visão Geral", icon: LayoutDashboard },
-    { href: "/comprador/mercado", label: "Mercado & Ofertas", icon: Store },
-    { href: "/comprador/pedidos", label: "Meus Pedidos", icon: Truck },
+    { href: "/transportador", label: "Visão Geral", icon: LayoutDashboard },
+    { href: "/transportador/rotas", label: "Logística & Rotas", icon: Map },
+    { href: "/transportador/entregas", label: "Entregas do Dia", icon: ClipboardList },
+    { href: "/transportador/veiculos", label: "Veículos & Documentos", icon: Truck },
+    { href: "/transportador/config", label: "Configurações", icon: Settings },
 ];
 
-export default function BuyerLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function TransportadorLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { role, setRole, hydrated } = useRole("buyer");
+    const { role, setRole, hydrated } = useRole("transportador");
     const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
         if (!hydrated) return;
         if (role === "producer") {
             router.replace("/dashboard");
-        } else if (role === "transportador") {
-            router.replace("/transportador");
+        } else if (role === "buyer") {
+            router.replace("/comprador");
         }
     }, [hydrated, role, router]);
 
@@ -47,7 +45,7 @@ export default function BuyerLayout({
                         <Button
                             variant={active ? "agro" : "ghost"}
                             className={cn(
-                                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-agro-sky/10 hover:text-agro-sky",
+                                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5",
                                 active && "text-agro-dark",
                             )}
                             onClick={() => setMobileOpen(false)}
@@ -66,30 +64,31 @@ export default function BuyerLayout({
             {/* Sidebar - Desktop */}
             <aside className="hidden w-72 border-r border-white/10 bg-card/50 backdrop-blur-xl md:flex flex-col">
                 <div className="p-6 space-y-4">
-                    <Link href="/comprador" className="flex items-center justify-center w-full">
+                    <Link href="/transportador" className="flex items-center gap-2 font-bold text-xl justify-center">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/logo.png" alt="AgroCoop" className="h-12 w-auto object-contain" />
                     </Link>
-
-                    <div className="px-1 text-xs font-medium text-agro-sky uppercase tracking-widest">Área do Comprador</div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                        <Shield className="h-3.5 w-3.5 text-agro-sky" />
+                        Operação do Transportador
+                    </div>
                     <RoleSwitcher compact />
                 </div>
 
                 <NavLinks />
 
                 <div className="p-4 border-t border-white/10 space-y-2">
-                    <Link href="/dashboard/settings">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
-                            <Settings className="h-4 w-4" />
-                            Configurações
-                        </Button>
-                    </Link>
-                    <Link href="/login">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive">
-                            <LogOut className="h-4 w-4" />
-                            Sair
-                        </Button>
-                    </Link>
+                    <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => {
+                            setRole("producer");
+                            router.push("/login");
+                        }}
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Sair
+                    </Button>
                 </div>
             </aside>
 
@@ -105,14 +104,14 @@ export default function BuyerLayout({
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto relative">
-                {/* Mobile Header (Simplified) */}
+                {/* Mobile Header */}
                 <header className="md:hidden h-16 border-b border-white/10 flex items-center px-4 justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-                    <Link href="/comprador" className="flex items-center gap-2">
+                    <Link href="/transportador" className="flex items-center gap-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/logo.png" alt="AgroCoop" className="h-8 w-auto object-contain" />
                     </Link>
                     <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-xs">Comprador</Badge>
+                        <Badge variant="outline" className="text-xs">Transportador</Badge>
                         <Button size="icon" variant="ghost" onClick={() => setMobileOpen((open) => !open)}>
                             <PanelLeft className="h-5 w-5" />
                         </Button>

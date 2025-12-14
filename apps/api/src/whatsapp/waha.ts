@@ -95,15 +95,46 @@ export class WahaClient {
         return result;
     }
 
-    async sendImage(to: string, caption: string, url: string, filename: string) {
+    async sendImage(to: string, caption: string, opts: { url?: string; base64?: string; filename?: string; mimetype?: string }) {
+        const filePayload: any = {
+            mimetype: opts.mimetype || "image/png",
+            filename: opts.filename || "agroboy.png",
+        };
+        if (opts.base64) {
+            filePayload.data = opts.base64;
+        } else if (opts.url) {
+            filePayload.url = opts.url;
+        } else {
+            throw new Error("sendImage requires url or base64");
+        }
+
         return this.post('sendImage', {
             chatId: this.formatPhone(to),
-            file: {
-                mimetype: "image/jpeg", // simplified
-                filename: filename,
-                url: url
-            },
+            file: filePayload,
             caption: caption
+        });
+    }
+
+    async sendVoice(to: string, base64: string) {
+        return this.post('sendVoice', {
+            chatId: this.formatPhone(to),
+            file: {
+                mimetype: "audio/mp3",
+                filename: "voice.mp3",
+                data: base64 // WAHA supports base64 in 'data' field or 'url'
+            }
+        });
+    }
+
+    async sendAudioBuffer(to: string, buffer: Buffer, mimetype = "audio/mp3") {
+        const base64 = buffer.toString("base64");
+        return this.post('sendVoice', {
+            chatId: this.formatPhone(to),
+            file: {
+                mimetype,
+                filename: "reply.mp3",
+                data: base64
+            }
         });
     }
 

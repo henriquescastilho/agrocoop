@@ -11,7 +11,7 @@ export default function PlaceholderPage({ title }: { title: string }) {
             <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{title}</h1>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                    Esta funcionalidade está mapeada no backlog do MVP, mas ainda não foi implementada na interface visual.
+                    Esta funcionalidade está planejada e será ativada em breve.
                 </p>
             </div>
             <Link href="/dashboard">

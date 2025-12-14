@@ -1,70 +1,55 @@
-import fetch from 'node-fetch';
-import { Buffer } from 'buffer';
+import fetch from "node-fetch";
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || "";
-const SPEECH_URL = `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_API_KEY}`;
+const PROJECT_ID = process.env.GOOGLE_PROJECT_ID;
+const LOCATION = process.env.GOOGLE_LOCATION || "us-central1";
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
-// Basic mapping for mime to codec if needed, but Google usually assumes WAV/Linear16 or MP3/OGG based on config.
-// WhatsApp audio is usually OGG Opus.
+export type TranscriptionResult = { text: string; confidence: number };
 
-export async function transcribeAudio(audioUrl: string): Promise<string | null> {
-    if (!GOOGLE_API_KEY) {
-        console.error("[STT] GOOGLE_API_KEY missing");
+/**
+ * Transcribe audio buffer using Google Speech-to-Text v2 (Vertex).
+ * Expects base64-encoded audio with mimeType (e.g., audio/ogg, audio/mp3).
+ */
+export async function transcribeAudio(buffer: Buffer, mimeType: string): Promise<TranscriptionResult | null> {
+    if (!PROJECT_ID || !GOOGLE_API_KEY) {
+        console.warn("[STT] Missing GOOGLE_PROJECT_ID or GOOGLE_API_KEY. Returning null.");
         return null;
     }
 
+    const url = `https://speech.googleapis.com/v2/projects/${PROJECT_ID}/locations/${LOCATION}/recognizers/_:recognize?key=${GOOGLE_API_KEY}`;
+
+    const audioContent = buffer.toString("base64");
+
+    const body = {
+        config: {
+            autoDecodingConfig: {},
+            languageCodes: ["pt-BR"],
+            model: "long",
+        },
+        content: audioContent,
+    };
+
     try {
-        // 1. Download Audio
-        const audioRes = await fetch(audioUrl);
-        if (!audioRes.ok) {
-            console.error(`[STT] Failed to download audio from ${audioUrl}: ${audioRes.statusText}`);
-            return null;
-        }
-        const arrayBuffer = await audioRes.arrayBuffer();
-        const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-
-        // 2. Prepare Request for Google Speech
-        // WAHA/WhatsApp usually sends OGG Opus.
-        // Google Cloud Speech-to-Text v1 supports OGG_OPUS.
-        const payload = {
-            config: {
-                encoding: "OGG_OPUS",
-                sampleRateHertz: 16000, // WhatsApp default for OGG
-                languageCode: process.env.GOOGLE_SPEECH_LANGUAGE || "pt-BR",
-                model: "default"
-            },
-            audio: {
-                content: base64Audio
-            }
-        };
-
-        // 3. Send to Google
-        const sttRes = await fetch(SPEECH_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'application/json' }
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
         });
 
-        const data = await sttRes.json();
-
-        if (data.error) {
-            console.error("[STT] Google API Error:", data.error);
-            // Fallback for different encodings if OGG fails (heuristic)
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("[STT] Error:", res.status, text);
             return null;
         }
 
-        if (!data.results || data.results.length === 0) {
-            return ""; // No speech detected
-        }
+        const json: any = await res.json();
+        const transcript = json.results?.[0]?.alternatives?.[0];
+        if (!transcript) return null;
 
-        // 4. Extract Transcript
-        const transcript = data.results
-            .map((result: any) => result.alternatives[0].transcript)
-            .join("\n");
-
-        console.log(`[STT] Transcribed: "${transcript}"`);
-        return transcript;
-
+        return {
+            text: transcript.transcript || "",
+            confidence: transcript.confidence || 0,
+        };
     } catch (err) {
         console.error("[STT] Exception:", err);
         return null;

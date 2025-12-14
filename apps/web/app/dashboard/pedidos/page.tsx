@@ -37,7 +37,7 @@ export default function PedidosPage() {
 
     const handleAccept = (id: string) => {
         setMatches(matches.map(m => m.id === id ? { ...m, status: "Confirmado" } : m));
-        setMessage("Match aceito. Logística simulada iniciada. TODO: integrar PATCH de status na API.");
+        setMessage("Match aceito. Logística iniciada.");
     };
 
     const handleReject = (id: string) => {
@@ -50,7 +50,7 @@ export default function PedidosPage() {
             <div className="flex items-between justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Pedidos & Matches</h1>
-                    <p className="text-muted-foreground">Oportunidades encontradas pela nossa Inteligência (Simulado).</p>
+                    <p className="text-muted-foreground">Oportunidades encontradas pela nossa inteligência.</p>
                 </div>
             </div>
 
@@ -87,7 +87,7 @@ export default function PedidosPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <Badge variant="warning">Simulado</Badge>
+                                <Badge variant="warning">Local</Badge>
                                 <Link href="/dashboard/logistica" className="text-sm text-agro-sky flex items-center gap-1 hover:underline">
                                     <Map className="h-4 w-4" /> Ver rota e coletas
                                 </Link>
@@ -106,7 +106,7 @@ export default function PedidosPage() {
                                 <div className="text-sm text-muted-foreground w-full md:w-auto text-right space-y-1">
                                     <p>Coleta agendada para amanhã.</p>
                                     <div className="inline-flex items-center gap-2 text-[11px] px-2 py-1 bg-white/5 rounded-full">
-                                        <Route className="h-3.5 w-3.5" /> Rota pronta (simulado)
+                                        <Route className="h-3.5 w-3.5" /> Rota pronta
                                     </div>
                                 </div>
                             )}

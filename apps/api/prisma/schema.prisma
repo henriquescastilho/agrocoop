@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   producer
   buyer
+  transportador
   admin
 }
 

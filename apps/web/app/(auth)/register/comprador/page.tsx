@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ShoppingCart, Building2, MapPin, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Building2, MapPin } from "lucide-react";
 import { useRole } from "@/lib/use-role";
-import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+import { createUser } from "@/lib/api";
 
-const libraries: ("places")[] = ["places"];
+const PHONE_MASK_HINT = "(DDD + número com WhatsApp)";
 
 export default function RegisterBuyerPage() {
     const router = useRouter();
@@ -24,37 +23,16 @@ export default function RegisterBuyerPage() {
     const [businessType, setBusinessType] = useState("Mercado");
     const [otherDescription, setOtherDescription] = useState("");
     const [address, setAddress] = useState("");
-    const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-
-    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries
-    });
-
-    const handlePlaceChanged = () => {
-        if (autocompleteRef.current) {
-            const place = autocompleteRef.current.getPlace();
-            if (place.geometry && place.geometry.location) {
-                setAddress(place.formatted_address || "");
-                setCoordinates({
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng()
-                });
-            }
-        }
-    };
+    const [whatsApp, setWhatsApp] = useState("");
+    const [email, setEmail] = useState("");
+    const [contactName, setContactName] = useState("");
 
     const handleGeolocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    setCoordinates({ lat: latitude, lng: longitude });
                     setAddress(`Coordenadas: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-                    // In real app: Call Google Geocoding API to get address text
                 },
                 (error) => {
                     console.error("Error getting location", error);
@@ -76,17 +54,31 @@ export default function RegisterBuyerPage() {
             return;
         }
 
-        setRole("buyer");
-        // Simulate API Payload
-        console.log({
-            role: "buyer",
-            businessType,
-            otherDescription,
-            address,
-            coordinates
-        });
+        setMessage(null);
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (!whatsApp.trim()) {
+            setMessage("Informe um número de WhatsApp válido.");
+            setIsLoading(false);
+            return;
+        }
+
+        const payload = {
+            role: "buyer" as const,
+            name: contactName || "Comprador",
+            phone: whatsApp,
+            email: email || undefined,
+            lat: undefined,
+            lng: undefined,
+        };
+
+        const res = await createUser(payload);
+        if (!res.ok) {
+            setMessage(`Erro ao salvar: ${res.error}`);
+            setIsLoading(false);
+            return;
+        }
+
+        setRole("buyer");
         router.push("/comprador");
     };
 
@@ -104,11 +96,21 @@ export default function RegisterBuyerPage() {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleRegister} className="space-y-6">
-                    <Badge variant="warning">Simulado</Badge>
-
                     {/* Section 1: Business Info */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground uppercase border-b border-white/10 pb-2">1. Dados da Organização</h3>
+                        <div className="space-y-2">
+                            <Label htmlFor="contact">Responsável</Label>
+                            <Input id="contact" placeholder="Nome do responsável" value={contactName} onChange={(e) => setContactName(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsapp">WhatsApp (obrigatório)</Label>
+                            <Input id="whatsapp" placeholder={PHONE_MASK_HINT} value={whatsApp} onChange={(e) => setWhatsApp(e.target.value)} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">E-mail (opcional)</Label>
+                            <Input id="email" type="email" placeholder="contato@empresa.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="company">Nome da Empresa / Órgão</Label>
                             <Input id="company" placeholder="Ex: Rede de Mercados Zona Sul" required />
@@ -146,24 +148,13 @@ export default function RegisterBuyerPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="address">Endereço de Recebimento (CD)</Label>
-                            {isLoaded ? (
-                                <Autocomplete
-                                    onLoad={(autocomplete) => { autocompleteRef.current = autocomplete; }}
-                                    onPlaceChanged={handlePlaceChanged}
-                                >
-                                    <Input
-                                        id="address"
-                                        placeholder="Digite para buscar..."
-                                        value={address}
-                                        onChange={(e) => setAddress(e.target.value)}
-                                        required
-                                    />
-                                </Autocomplete>
-                            ) : (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Loader2 className="animate-spin h-4 w-4" /> Carregando Google Maps...
-                                </div>
-                            )}
+                            <Input
+                                id="address"
+                                placeholder="Rua, número, bairro, cidade"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                required
+                            />
                         </div>
 
                         <div className="mt-2">

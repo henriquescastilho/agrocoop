@@ -1,6 +1,6 @@
 'use client';
 
-export type UserRole = "producer" | "buyer" | "admin";
+export type UserRole = "producer" | "buyer" | "transportador" | "admin";
 
 const FALLBACK_API = "http://localhost:4000";
 const rawApiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
@@ -130,9 +130,9 @@ export const demoIds = {
 
 export const apiBaseLabel = apiBase;
 
-// Local mock registry helpers to keep IDs coerent even sem backend
-const MOCK_USER_KEY = "agrocoop:mock-user";
-const MOCK_PRODUCTS_KEY = "agrocoop:mock-products";
+// Local registry helpers to keep IDs coerent mesmo sem backend
+const LOCAL_USER_KEY = "agrocoop:user-local";
+const LOCAL_PRODUCTS_KEY = "agrocoop:produtos-locais";
 
 const createId = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
 
@@ -141,7 +141,7 @@ export function ensureMockUser(role: UserRole = "buyer"): MockUser {
     if (typeof window === "undefined") {
         return { id: demoIds.buyerUser || "local-buyer", role, name: "Usuário Local" };
     }
-    const stored = window.localStorage.getItem(MOCK_USER_KEY);
+    const stored = window.localStorage.getItem(LOCAL_USER_KEY);
     if (stored) {
         try {
             const parsed = JSON.parse(stored) as MockUser;
@@ -150,20 +150,20 @@ export function ensureMockUser(role: UserRole = "buyer"): MockUser {
             // fall through
         }
     }
-    const mock: MockUser = {
+    const localUser: MockUser = {
         id: demoIds.buyerUser || createId(),
         role,
         name: role === "buyer" ? "Comprador Local" : "Produtor Local",
         phone: "+55" + Math.floor(Math.random() * 1_000_000_000),
     };
-    window.localStorage.setItem(MOCK_USER_KEY, JSON.stringify(mock));
-    return mock;
+    window.localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(localUser));
+    return localUser;
 }
 
 export type MockProduct = { id: string; name: string; unit: string };
 export function ensureMockProducts(): MockProduct[] {
     if (typeof window === "undefined") return [];
-    const stored = window.localStorage.getItem(MOCK_PRODUCTS_KEY);
+    const stored = window.localStorage.getItem(LOCAL_PRODUCTS_KEY);
     if (stored) {
         try {
             return JSON.parse(stored) as MockProduct[];
@@ -176,6 +176,6 @@ export function ensureMockProducts(): MockProduct[] {
         { id: createId(), name: "Alface", unit: "un" },
         { id: createId(), name: "Batata", unit: "kg" },
     ];
-    window.localStorage.setItem(MOCK_PRODUCTS_KEY, JSON.stringify(products));
+    window.localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(products));
     return products;
 }

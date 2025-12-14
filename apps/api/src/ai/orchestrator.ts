@@ -2,9 +2,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini
-const apiKey = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
 export class AIOrchestrator {
     private model;
@@ -13,7 +13,7 @@ export class AIOrchestrator {
         if (!apiKey) {
             console.warn("[AI] GEMINI_API_KEY is missing. AI features will fallback to mock.");
         }
-        this.model = genAI.getGenerativeModel({ model: MODEL_NAME });
+        this.model = genAI?.getGenerativeModel({ model: MODEL_NAME });
     }
 
     async explainMatch(matchData: any): Promise<string> {

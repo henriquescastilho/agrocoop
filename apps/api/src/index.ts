@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import fs from "node:fs";
@@ -5,24 +6,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { runMatches } from "./match-runner.js";
+import { waha } from "./whatsapp/waha.js";
 
-import { whatsappRouter } from "./whatsapp/routes";
-import { signalsRouter } from './services/mapbiomas';
-import { eventsRouter } from './routes/events';
-import { routingRouter } from './routes/routing';
-import { aiRouter } from './routes/ai';
-import { inmetRouter } from './routes/inmet';
+import { whatsappRouter } from "./whatsapp/routes.js";
+import signalsRouter from './routes/signals.js';
+import eventsRouter from './routes/events.js';
+import routingRouter from './routes/routing.js';
+import aiRouter from './routes/ai.js';
+import inmetRouter from './routes/inmet.js';
 
 
 
 
 const app = express();
-const port = 4000;
+
 
 app.use(cors());
-app.use(express.json({ limit: "50mb" })); // Increased for audio/files
-
-// Routes
+app.use(express.json({ limit: "50mb" }));
 app.use('/api/sources/inmet', inmetRouter);
 app.use('/api/signals', signalsRouter);
 app.use('/api/events', eventsRouter);
@@ -42,7 +42,7 @@ app.listen(port, () => {
   console.log(`[api] listening on http://localhost:${port}`);
 });
 
-import { collectInmetData, getLatestInmetData } from "./sources/inmet.js"; // Note the .js extension for imports in this project structure
+
 import { prisma } from "./prisma.js";
 
 
@@ -105,27 +105,34 @@ app.get("/api/meta", async (_req, res) => {
   });
 });
 
-app.get("/api/sources/inmet", async (_req, res) => {
-  const data = getLatestInmetData();
-  if (!data) return res.status(404).json({ error: "No data available" });
-  res.json(data);
-});
 
-app.post("/api/sources/inmet/collect", async (_req, res) => {
-  const result = await collectInmetData();
-  if (!result) return res.status(500).json({ error: "Failed to collect INMET data" });
-  res.json(result);
-});
 
 
 const userSchema = z.object({
-  role: z.enum(["producer", "buyer", "admin"]),
+  role: z.enum(["producer", "buyer", "transportador", "admin"]),
   name: z.string().min(1),
   phone: z.string().min(5),
   email: z.string().email().optional(),
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
 });
+
+const ADMIN_PHONE = process.env.WAHA_ADMIN_PHONE;
+if (!ADMIN_PHONE) {
+  console.warn("[WAHA] WAHA_ADMIN_PHONE not configured. Admin notifications disabled.");
+}
+
+const sendRegistrationWhatsApp = async (to: string, role: string, name?: string) => {
+  const message = `AgroCoop: cadastro recebido para ${role}. Nome: ${name || "N/A"}. Em breve confirmaremos os próximos passos.`;
+  try {
+    await waha.sendText(to, message);
+    if (ADMIN_PHONE && ADMIN_PHONE !== to) {
+      await waha.sendText(ADMIN_PHONE, `Novo cadastro (${role}): ${name || "Sem nome"} • ${to}`);
+    }
+  } catch (err) {
+    console.warn("[WAHA] Falha ao enviar notificação de cadastro:", err);
+  }
+};
 
 app.post("/api/users", async (req, res) => {
   const parsed = userSchema.safeParse(req.body);
@@ -143,6 +150,10 @@ app.post("/api/users", async (req, res) => {
         lng: parsed.data.lng ?? null,
       },
     });
+    // notify via WhatsApp (best-effort)
+    if (created.phone) {
+      sendRegistrationWhatsApp(created.phone, parsed.data.role, created.name || undefined).catch(() => { /* already logged */ });
+    }
     res.status(201).json(created);
   } catch (err) {
     console.error("[api] failed to create user", err);

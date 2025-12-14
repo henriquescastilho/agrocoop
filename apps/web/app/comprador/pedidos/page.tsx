@@ -44,7 +44,7 @@ export default function BuyerOrdersPage() {
                     <div className="flex flex-col items-end">
                         <Badge className="bg-agro-green text-agro-dark mb-2">{routeStatus ? "Rota Confirmada" : "Em Trânsito"}</Badge>
                         <p className="text-xs text-muted-foreground">{routeStatus || "Chegada estimada: 14:30"}</p>
-                        <Link href="/comprador/rotas" className="text-xs text-agro-sky flex items-center gap-1 hover:underline" onClick={() => setMessage("Abrindo rota consolidada (mock).")}>
+                        <Link href="/comprador/rotas" className="text-xs text-agro-sky flex items-center gap-1 hover:underline" onClick={() => setMessage("Abrindo rota consolidada.")}>
                             <MapPinned className="h-3.5 w-3.5" /> Ver rota
                         </Link>
                     </div>

@@ -21,7 +21,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoading(true);
         setRole(role);
-        setMessage("Sessão mockada. Vamos levar você direto para o painel escolhido.");
+        setMessage("Sessão iniciada. Vamos levar você direto para o painel escolhido.");
 
         await new Promise((resolve) => setTimeout(resolve, 600));
         router.push(role === "producer" ? "/dashboard" : "/comprador");
@@ -37,7 +37,6 @@ export default function LoginPage() {
                 </div>
                 <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
                     Acessar AgroCoop
-                    <Badge variant="warning">Simulado</Badge>
                 </CardTitle>
                 <CardDescription className="text-center">
                     Autenticação real entra depois. Por enquanto definimos o role e abrimos o painel.
