@@ -43,15 +43,27 @@ O Frontend Next.js.
    - **Framework Preset**: Next.js (Automático)
    - **Root Directory**: `apps/web`
    - **Environment Variables**:
-     - `NEXT_PUBLIC_API_BASE_URL`: A URL da API que você acabou de criar (passo anterior). Ex: `https://agrocoop-api.vercel.app`
+     - `NEXT_PUBLIC_API_BASE_URL`: A URL da API que você acabou de criar. Ex: `https://agrocoop-api.vercel.app`
      - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: Sua chave do Maps.
-     - `NEXT_PUBLIC_WAHA_HOST`: URL do Waha (opcional).
 3. Clique em **Deploy**.
 
-## 4. Finalização ✅
-Acesse o link do Frontend.
-- O Frontend vai chamar o Backend na URL definida.
-- O Backend vai conectar no Postgres.
-- O Gemini vai funcionar via Serverless.
+## 4. Deploy do WAHA (WhatsApp) 📱
+O WAHA precisa de um navegador (Chrome) rodando 24/7, por isso **não roda na Vercel**. Vamos usar a **Render.com** (Gratuito/Barato).
 
-> **Nota**: O "Agroboy" (Bot WhatsApp) precisa que o WAHA esteja rodando. O WAHA não roda nativamente na Vercel "Serverless" pois precisa de navegador (Puppeteer). Para o Bot funcionar 100%, o WAHA deve estar em um VPS (Render/Railway/DigitalOcean) e a URL dele colocada nas variáveis. Mas o resto do sistema (Web + API Lógica) funciona 100% Vercel.
+1. Crie uma conta na [Render.com](https://render.com).
+2. Vá em **Blueprints** > **New Blueprint Instance**.
+3. Conecte este repositório (`agrocoop`).
+4. A Render vai ler o arquivo `render.yaml` que criei e subir o WAHA automaticamente.
+5. **Anote a URL do WAHA** (ex: `https://agrocoop-waha.onrender.com`).
+
+## 5. Conectando Tudo 🔗
+Agora que você tem o WAHA, volte na sua **API (Vercel)** e adicione a variável:
+- `WAHA_BASE_URL`: `https://agrocoop-waha.onrender.com`
+
+E no **WAHA (Render)**, configure o Webhook (opcional, via painel do WAHA) para apontar para sua API:
+- Webhook URL: `https://agrocoop-api.vercel.app/api/whatsapp/webhook`
+
+## 6. Pronto! ✅
+Acesse o Frontend.
+- Escaneie o QR Code no painel do WAHA (`/dashboard`) ou veja os logs da Render.
+- O sistema está 100% no ar.

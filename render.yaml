@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: agrocoop-waha
+    env: docker
+    dockerContext: .
+    image: devlikeapro/waha:latest
+    plan: free
+    envVars:
+      - key: WHATSAPP_DEFAULT_ENGINE
+        value: WEBJS
+      - key: WAHA_PRINT_QR
+        value: "True"
+      - key: WAHA_NO_FILES
+        value: "True"
+    healthCheckPath: /dashboard
+    startCommand: start
+    disk:
+      name: waha-data
+      mountPath: /app/sessions
+      sizeGB: 1
+
+permissions:
+  - key: waha-data
