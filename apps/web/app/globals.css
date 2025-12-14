@@ -2,7 +2,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 44 29% 93%;
+    /* #F4F1E8 (Off-White) converted to HSL approx */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -77,6 +78,15 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(26, 70, 51, 0.08), transparent 25%),
+      radial-gradient(circle at 80% 0%, rgba(46, 107, 133, 0.08), transparent 22%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent 40%);
+  }
+
+  ::selection {
+    background: rgba(76, 175, 80, 0.25);
+    color: #0f2018;
   }
 }
 
@@ -92,4 +102,73 @@
 .dark .glass-panel {
   background-color: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Location Button Animation */
+button.btn-location {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  background: #1A4633;
+  /* Agro-Dark */
+  font-family: inherit;
+  box-shadow: 0px 6px 24px 0px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+}
+
+button.btn-location:after {
+  content: " ";
+  width: 0%;
+  height: 100%;
+  background: #B89B44;
+  /* Earth-Gold */
+  position: absolute;
+  transition: all 0.4s ease-in-out;
+  right: 0;
+}
+
+button.btn-location:hover::after {
+  right: auto;
+  left: 0;
+  width: 100%;
+}
+
+button.btn-location span {
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+  padding: 10px 15px;
+  color: #fff;
+  font-size: 0.9em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  z-index: 20;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+button.btn-location:hover span {
+  color: #1A4633;
+  animation: scaleUp 0.3s ease-in-out;
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }

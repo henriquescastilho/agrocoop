@@ -9,14 +9,20 @@ import { Label } from "@radix-ui/react-label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-shim"; // Placeholder for shim
 import { MapPin, Sprout, Truck, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useRole } from "@/lib/use-role";
 
 export default function RegisterProducerPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+    const { setRole } = useRole("producer");
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setRole("producer");
+        setMessage("Cadastro mockado. Role salvo em cookie/localStorage. Próximo: enviar para API.");
         await new Promise((resolve) => setTimeout(resolve, 1500));
         router.push("/dashboard");
     };
@@ -35,6 +41,7 @@ export default function RegisterProducerPage() {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleRegister} className="space-y-6">
+                    <Badge variant="warning">Simulado</Badge>
 
                     {/* Section 1: Identity */}
                     <div className="space-y-4">
@@ -103,6 +110,8 @@ export default function RegisterProducerPage() {
                     <Button className="w-full bg-agro-green text-agro-dark hover:bg-agro-green/90 h-12 text-base font-semibold" type="submit" disabled={isLoading}>
                         {isLoading ? "Processando Cadastro..." : "Finalizar Cadastro"}
                     </Button>
+
+                    {message && <p className="text-xs text-agro-sky">{message}</p>}
 
                 </form>
             </CardContent>

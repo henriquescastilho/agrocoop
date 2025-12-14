@@ -48,10 +48,12 @@ Ele é um **sistema de coordenação logística e preditiva**.
 4. O sistema sugere:
    - tipo de transporte (terrestre, fluvial)
    - necessidade de refrigeração
-   - melhor dia/horário de coleta (baseado no clima)
-   - rota completa do caminhão
-
-5. IA SEMPRE explica suas decisões em linguagem humana.
+   - melhor dia/horário- **Backend**: Node.js (Express), Prisma (SQLite), **Gemini 2.5 Flash (AI)**.
+- **Frontend**: Next.js 14, Tailwind CSS, Shadcn/UI.
+- **Inteligência**: 
+  - Otimização de Rotas (TSP Solver Nativo).
+  - Análise Climática (INMET/MapBiomas).
+  - Explicação de Decisões (LLM). IA SEMPRE explica suas decisões em linguagem humana.
 
 ---
 

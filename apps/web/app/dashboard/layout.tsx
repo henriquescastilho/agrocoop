@@ -1,57 +1,89 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Sprout, LayoutDashboard, Map, Package, Settings, LogOut, PanelLeft } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Sprout, LayoutDashboard, Map, Package, Settings, LogOut, PanelLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RoleSwitcher } from "@/components/role-switcher";
+import { useRole } from "@/lib/use-role";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+    { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
+    { href: "/dashboard/produtores", label: "Minha Produção", icon: Sprout },
+    { href: "/dashboard/logistica", label: "Logística (Coletas)", icon: Map },
+    { href: "/dashboard/pedidos", label: "Pedidos & Matches", icon: Package },
+];
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const { role, setRole, hydrated } = useRole("producer");
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        if (hydrated && role === "buyer") {
+            router.replace("/comprador");
+        }
+    }, [hydrated, role, router]);
+
+    const activePath = useMemo(() => pathname ?? "", [pathname]);
+
+    const NavLinks = () => (
+        <nav className="flex-1 px-4 space-y-2">
+            {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = activePath === item.href;
+                return (
+                    <Link href={item.href} key={item.href}>
+                        <Button
+                            variant={active ? "agro" : "ghost"}
+                            className={cn(
+                                "w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5",
+                                active && "text-agro-dark",
+                            )}
+                            onClick={() => setMobileOpen(false)}
+                        >
+                            <Icon className="h-4 w-4" />
+                            {item.label}
+                        </Button>
+                    </Link>
+                );
+            })}
+        </nav>
+    );
+
     return (
         <div className="flex h-screen overflow-hidden bg-background">
             {/* Sidebar - Desktop */}
-            <aside className="hidden w-64 border-r border-white/10 bg-card/50 backdrop-blur-xl md:flex flex-col">
-                <div className="p-6">
-                    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl">
-                        <div className="h-8 w-8 rounded-lg bg-agro-green/20 flex items-center justify-center">
-                            <Sprout className="h-5 w-5 text-agro-green" />
-                        </div>
-                        <span>Agro<span className="text-agro-green">Coop</span></span>
+            <aside className="hidden w-72 border-r border-white/10 bg-card/50 backdrop-blur-xl md:flex flex-col">
+                <div className="p-6 space-y-4">
+                    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/logo.png" alt="AgroCoop" className="h-12 w-auto object-contain" />
                     </Link>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                        <Shield className="h-3.5 w-3.5 text-agro-earth" />
+                        Operação do Agricultor
+                    </div>
+                    <RoleSwitcher compact />
                 </div>
 
-                <nav className="flex-1 px-4 space-y-2">
-                    <Link href="/dashboard">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5">
-                            <LayoutDashboard className="h-4 w-4" />
-                            Visão Geral
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/produtores">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5">
-                            <Sprout className="h-4 w-4" />
-                            Minha Produção
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/logistica">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5">
-                            <Map className="h-4 w-4" />
-                            Logística & Mapa
-                        </Button>
-                    </Link>
-                    <Link href="/dashboard/pedidos">
-                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-white/5">
-                            <Package className="h-4 w-4" />
-                            Pedidos & Matches
-                        </Button>
-                    </Link>
-                </nav>
+                <NavLinks />
 
                 <div className="p-4 border-t border-white/10 space-y-2">
-                    <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
-                        <Settings className="h-4 w-4" />
-                        Configurações
-                    </Button>
+                    <Link href="/dashboard/settings">
+                        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
+                            <Settings className="h-4 w-4" />
+                            Configurações
+                        </Button>
+                    </Link>
                     <Link href="/login">
                         <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive">
                             <LogOut className="h-4 w-4" />
@@ -61,16 +93,30 @@ export default function DashboardLayout({
                 </div>
             </aside>
 
+            {/* Mobile Drawer */}
+            {mobileOpen && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:hidden" onClick={() => setMobileOpen(false)}>
+                    <div className="absolute left-0 top-0 h-full w-72 bg-card border-r border-white/10 p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <RoleSwitcher />
+                        <NavLinks />
+                    </div>
+                </div>
+            )}
+
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto relative">
                 {/* Mobile Header (Simplified) */}
                 <header className="md:hidden h-16 border-b border-white/10 flex items-center px-4 justify-between bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-                    <div className="flex items-center gap-2 font-bold text-lg">
-                        <Sprout className="text-agro-green h-5 w-5" /> AgroCoop
+                    <Link href="/dashboard" className="flex items-center gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/logo.png" alt="AgroCoop" className="h-8 w-auto object-contain" />
+                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-xs">Agricultor</Badge>
+                        <Button size="icon" variant="ghost" onClick={() => setMobileOpen((open) => !open)}>
+                            <PanelLeft className="h-5 w-5" />
+                        </Button>
                     </div>
-                    <Button size="icon" variant="ghost">
-                        <PanelLeft className="h-5 w-5" />
-                    </Button>
                 </header>
 
                 <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 pb-20">

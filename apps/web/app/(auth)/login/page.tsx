@@ -7,21 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@radix-ui/react-label";
-import { Sprout } from "lucide-react";
+import { Sprout, ShoppingCart, ShieldCheck } from "lucide-react";
+import { useRole } from "@/lib/use-role";
+import { Badge } from "@/components/ui/badge";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { setRole } = useRole();
     const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent, role: "producer" | "buyer") => {
         e.preventDefault();
         setIsLoading(true);
+        setRole(role);
+        setMessage("Sessão mockada. Vamos levar você direto para o painel escolhido.");
 
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // For MVP demo, redirect to dashboard regardless of input
-        router.push("/dashboard");
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        router.push(role === "producer" ? "/dashboard" : "/comprador");
     };
 
     return (
@@ -32,13 +35,16 @@ export default function LoginPage() {
                         <Sprout className="h-6 w-6 text-agro-green" />
                     </div>
                 </div>
-                <CardTitle className="text-2xl text-center">Acessar AgroCoop</CardTitle>
+                <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
+                    Acessar AgroCoop
+                    <Badge variant="warning">Simulado</Badge>
+                </CardTitle>
                 <CardDescription className="text-center">
-                    Entre com seu e-mail e senha
+                    Autenticação real entra depois. Por enquanto definimos o role e abrimos o painel.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">E-mail</Label>
                         <Input id="email" placeholder="nome@exemplo.com" required type="email" />
@@ -46,15 +52,43 @@ export default function LoginPage() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="password">Senha</Label>
-                            <Link href="#" className="text-sm text-primary hover:underline">
+                            <button
+                                type="button"
+                                className="text-sm text-primary hover:underline"
+                                onClick={() => setMessage("Recuperação de senha será feita via WhatsApp/Email. TODO: integrar endpoint real.")}
+                            >
                                 Esqueceu a senha?
-                            </Link>
+                            </button>
                         </div>
                         <Input id="password" required type="password" />
                     </div>
-                    <Button className="w-full bg-agro-green text-agro-dark hover:bg-agro-green/90" type="submit" disabled={isLoading}>
-                        {isLoading ? "Entrando..." : "Entrar"}
-                    </Button>
+
+                    <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-3 text-xs text-muted-foreground flex items-start gap-2">
+                        <ShieldCheck className="h-4 w-4 text-agro-sky mt-0.5" />
+                        <span>Role é persistido em cookie/localStorage. No produto real será atrelado ao usuário autenticado.</span>
+                    </div>
+
+                    <div className="space-y-3">
+                        <Button
+                            type="button"
+                            className="w-full bg-agro-green hover:bg-agro-green/90 text-agro-dark font-bold h-12 text-base"
+                            onClick={(e) => handleLogin(e, "producer")}
+                            disabled={isLoading}
+                        >
+                            <Sprout className="mr-2 h-4 w-4" /> Entrar como Produtor
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-agro-sky text-agro-sky hover:bg-agro-sky/10 font-bold h-12 text-base"
+                            onClick={(e) => handleLogin(e, "buyer")}
+                            disabled={isLoading}
+                        >
+                            <ShoppingCart className="mr-2 h-4 w-4" /> Entrar como Comprador
+                        </Button>
+                    </div>
+
+                    {message && <p className="text-xs text-agro-sky text-center">{message}</p>}
                 </form>
             </CardContent>
             <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">

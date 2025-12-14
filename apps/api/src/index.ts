@@ -7,14 +7,31 @@ import { z } from "zod";
 import { runMatches } from "./match-runner.js";
 
 import { whatsappRouter } from "./whatsapp/routes";
+import { signalsRouter } from './services/mapbiomas';
+import { eventsRouter } from './routes/events';
+import { routingRouter } from './routes/routing';
+import { aiRouter } from './routes/ai';
+import { inmetRouter } from './routes/inmet';
+
+
+
 
 const app = express();
+const port = 4000;
 
-app.use(express.json());
 app.use(cors());
+app.use(express.json({ limit: "50mb" })); // Increased for audio/files
 
 // Routes
-app.use("/api/whatsapp", whatsappRouter);
+app.use('/api/sources/inmet', inmetRouter);
+app.use('/api/signals', signalsRouter);
+app.use('/api/events', eventsRouter);
+app.use('/api/routing', routingRouter);
+app.use('/api/ai', aiRouter);
+app.use('/api/whatsapp', whatsappRouter);
+
+
+
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -25,7 +42,9 @@ app.listen(port, () => {
   console.log(`[api] listening on http://localhost:${port}`);
 });
 
+import { collectInmetData, getLatestInmetData } from "./sources/inmet.js"; // Note the .js extension for imports in this project structure
 import { prisma } from "./prisma.js";
+
 
 const offerSchema = z.object({
   userId: z.string().min(1),
@@ -85,6 +104,19 @@ app.get("/api/meta", async (_req, res) => {
     },
   });
 });
+
+app.get("/api/sources/inmet", async (_req, res) => {
+  const data = getLatestInmetData();
+  if (!data) return res.status(404).json({ error: "No data available" });
+  res.json(data);
+});
+
+app.post("/api/sources/inmet/collect", async (_req, res) => {
+  const result = await collectInmetData();
+  if (!result) return res.status(500).json({ error: "Failed to collect INMET data" });
+  res.json(result);
+});
+
 
 const userSchema = z.object({
   role: z.enum(["producer", "buyer", "admin"]),

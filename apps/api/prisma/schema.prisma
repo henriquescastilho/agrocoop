@@ -131,3 +131,12 @@ model Event {
   payload   String? // JSON string
   createdAt DateTime @default(now())
 }
+
+model ConversationState {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  role      String?  // producer | buyer | admin | unknown
+  step      String   @default("START") // START | REGISTER_NAME | REGISTER_LOC | ...
+  draft     String?  // JSON string for temp data
+  updatedAt DateTime @updatedAt
+}

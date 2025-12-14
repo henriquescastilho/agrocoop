@@ -41,12 +41,12 @@ const config: Config = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
-                // AgroCoop Custom Brand Colors
+                // AgroCoop Custom Brand Colors (Official Manual)
                 agro: {
-                    green: "#4ADE80", // Vibrant Green
-                    dark: "#1A2E1A",  // Deep Forest Green
-                    earth: "#8B5E3C", // Soil Brown
-                    sky: "#38BDF8",   // Clear Sky Blue
+                    green: "#4CAF50", // Verde Broto (CTA/Action)
+                    dark: "#1A4633",  // Deep Forest (Structure/Menus)
+                    earth: "#B89B44", // Dourado Terra (Value/Highlight)
+                    sky: "#2E6B85",   // Azul Guanabara (Data/Security)
                 }
             },
             borderRadius: {
