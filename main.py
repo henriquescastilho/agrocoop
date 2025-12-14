@@ -110,33 +110,18 @@ def setup_database(project_root):
         sys.exit(1)
 
 def start_services(project_root):
-    """Sobe API e Web em processos separados para rodar todo o programa."""
-    api_env = load_env_file(os.path.join(project_root, "apps/api/.env"))
-    web_env = load_env_file(os.path.join(project_root, "apps/web/.env.local"))
-
-    procs = []
+    """Sobe API e Web usando o script 'dev' do root (concurrently)."""
+    print("   ▶️  Disparando 'npm run dev' (API + Web)...")
+    print("   ---------------------------------------------------")
     try:
-        print("   ▶️  Subindo API (apps/api)...")
-        procs.append(subprocess.Popen(["npm", "--workspace", "apps/api", "run", "dev"], cwd=project_root, env=api_env))
-
-        print("   ▶️  Subindo Web (apps/web)...")
-        procs.append(subprocess.Popen(["npm", "--workspace", "apps/web", "run", "dev"], cwd=project_root, env=web_env))
-
-        print("\n✅ Serviços iniciados. API http://localhost:4000 • Web http://localhost:3000")
-        print("Pressione Ctrl+C para encerrar ambos.")
-        for p in procs:
-            p.wait()
+        # Uses the root 'dev' script which calls concurrently
+        # We don't need to manually inject env vars because dotenv/Next.js handle files.
+        subprocess.run(["npm", "run", "dev"], cwd=project_root, check=True)
     except KeyboardInterrupt:
-        print("\n\n🛑 Encerrando serviços...")
-    finally:
-        for p in procs:
-            if p.poll() is None:
-                p.terminate()
-        for p in procs:
-            try:
-                p.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                p.kill()
+        print("\n\n🛑 Encerrando...")
+    except subprocess.CalledProcessError:
+        print("\n\n❌ Erro na execução dos serviços.")
+
 
 
 def main():
