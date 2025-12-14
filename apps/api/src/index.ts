@@ -18,8 +18,8 @@ import inmetRouter from './routes/inmet.js';
 
 
 
-const app = express();
-
+// Export app for Verce/Serverless
+export const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
@@ -30,17 +30,17 @@ app.use('/api/routing', routingRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/whatsapp', whatsappRouter);
 
-
-
-
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-const port = Number(process.env.PORT ?? 4000);
-app.listen(port, () => {
-  console.log(`[api] listening on http://localhost:${port}`);
-});
+// Only listen if not running in Vercel (local dev)
+if (!process.env.VERCEL) {
+  const port = Number(process.env.PORT ?? 4000);
+  app.listen(port, () => {
+    console.log(`[api] listening on http://localhost:${port}`);
+  });
+}
 
 
 import { prisma } from "./prisma.js";
