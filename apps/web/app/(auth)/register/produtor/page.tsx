@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { MapPin, Sprout } from "lucide-react";
 import { useRole } from "@/lib/use-role";
 import { createUser } from "@/lib/api";
+import { LocationPicker } from "@/components/common/location-picker";
 
 const PHONE_MASK_HINT = "(DDD + número com WhatsApp)";
 
@@ -27,6 +28,8 @@ export default function RegisterProducerPage() {
     const [plantation, setPlantation] = useState("Tomate");
     const [otherPlantation, setOtherPlantation] = useState("");
     const [windowText, setWindowText] = useState("");
+    const [lat, setLat] = useState<number | undefined>();
+    const [lng, setLng] = useState<number | undefined>();
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,6 +47,8 @@ export default function RegisterProducerPage() {
             name: name || "Produtor",
             phone: whatsApp,
             email: email || undefined,
+            lat,
+            lng,
         };
 
         const res = await createUser(payload);
@@ -92,8 +97,17 @@ export default function RegisterProducerPage() {
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground uppercase border-b border-white/10 pb-2 flex items-center justify-between">
                             2. Seu Sítio / Fazenda
-                            <span className="text-xs text-agro-sky flex items-center gap-1"><MapPin className="h-3 w-3" /> Localização Automática</span>
                         </h3>
+
+                        {/* Location Module */}
+                        <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                            <Label className="text-xs text-muted-foreground mb-2 block">Localização Exata da Fazenda (Importante para logística)</Label>
+                            <LocationPicker
+                                onLocationDetected={(l, lg) => { setLat(l); setLng(lg); setMessage("Localização capturada com sucesso!"); }}
+                                label="Pegar Minha Posição de Plantio"
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="farm-name">Nome do Local</Label>
                             <Input id="farm-name" placeholder="Ex: Sítio Esperança" value={farmName} onChange={(e) => setFarmName(e.target.value)} required />

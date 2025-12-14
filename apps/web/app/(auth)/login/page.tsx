@@ -9,21 +9,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Label } from "@radix-ui/react-label";
 import { Sprout, ShoppingCart, ShieldCheck } from "lucide-react";
 import { useRole } from "@/lib/use-role";
-import { Badge } from "@/components/ui/badge";
+import { LocationPicker } from "@/components/common/location-picker";
 
 export default function LoginPage() {
     const router = useRouter();
     const { setRole } = useRole();
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
     const handleLogin = async (e: React.FormEvent, role: "producer" | "buyer") => {
         e.preventDefault();
         setIsLoading(true);
         setRole(role);
-        setMessage("Sessão iniciada. Vamos levar você direto para o painel escolhido.");
 
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        let msg = "Sessão iniciada. ";
+        if (role === "producer") {
+            if (location) {
+                msg += "Localização validada com sucesso! ";
+                // Here we would ideally send "location" to the backend to "validate with last location"
+                // For MVP, we persist in localStorage for demonstration
+                localStorage.setItem("agrocoop:last-login-location", JSON.stringify(location));
+            } else {
+                msg += "Aviso: Localização não verificada hoje. ";
+            }
+        }
+        setMessage(msg + "Redirecionando...");
+
+        await new Promise((resolve) => setTimeout(resolve, 800));
         router.push(role === "producer" ? "/dashboard" : "/comprador");
     };
 
@@ -62,9 +75,20 @@ export default function LoginPage() {
                         <Input id="password" required type="password" />
                     </div>
 
-                    <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-3 text-xs text-muted-foreground flex items-start gap-2">
-                        <ShieldCheck className="h-4 w-4 text-agro-sky mt-0.5" />
-                        <span>Role é persistido em cookie/localStorage. No produto real será atrelado ao usuário autenticado.</span>
+                    <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-3 text-xs text-muted-foreground space-y-2">
+                        <div className="flex items-start gap-2">
+                            <ShieldCheck className="h-4 w-4 text-agro-sky mt-0.5" />
+                            <span>Role é persistido em cookie/localStorage.</span>
+                        </div>
+
+                        {/* Location Module in Login as requested */}
+                        <div className="pt-2 border-t border-white/10">
+                            <Label className="text-[10px] uppercase text-agro-green font-bold mb-1 block">Validação de Localização (Produtor)</Label>
+                            <LocationPicker
+                                label="Validar Minha Localização Atual"
+                                onLocationDetected={(lat, lng) => setLocation({ lat, lng })}
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-3">
@@ -87,7 +111,7 @@ export default function LoginPage() {
                         </Button>
                     </div>
 
-                    {message && <p className="text-xs text-agro-sky text-center">{message}</p>}
+                    {message && <p className="text-xs text-agro-sky text-center animate-pulse">{message}</p>}
                 </form>
             </CardContent>
             <CardFooter className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
