@@ -1,0 +1,133 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  producer
+  buyer
+  admin
+}
+
+enum MatchStatus {
+  pending
+  accepted
+  declined
+}
+
+model User {
+  id        String   @id @default(cuid())
+  role      Role
+  name      String?
+  phone     String   @unique
+  email     String?  @unique
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers   Offer[]
+  demands  Demand[]
+  sessions Session[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  unit      String
+  category  String?
+  createdAt DateTime @default(now())
+
+  offers  Offer[]
+  demands Demand[]
+}
+
+model Offer {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  qty       Float
+  window    String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  matches Match[]
+}
+
+model Demand {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  qty       Float
+  window    String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  matches Match[]
+}
+
+model Match {
+  id         String      @id @default(cuid())
+  offerId    String
+  demandId   String
+  status     MatchStatus @default(pending)
+  windowFit  Float?
+  distanceKm Float?
+  riskScore  Float?
+  rationale  String? // JSON string
+  createdAt  DateTime    @default(now())
+
+  offer    Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  demand   Demand    @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  guidance Guidance?
+}
+
+model Guidance {
+  id                   String   @id @default(cuid())
+  matchId              String   @unique
+  coldChainRequired    Boolean  @default(false)
+  recommendedTempRange String?
+  maxTransitHours      Float?
+  handlingNotes        String?
+  incompatibilities    String? // JSON string
+  suggestedPriceMin    Float?
+  suggestedPriceMax    Float?
+  explanation          String?
+  routeSteps           String? // JSON string
+  durationMin          Float?
+  distanceKm           Float?
+  createdAt            DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  type      String
+  userId    String?
+  matchId   String?
+  payload   String? // JSON string
+  createdAt DateTime @default(now())
+}

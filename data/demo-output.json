@@ -1,0 +1,85 @@
+{
+  "createdAt": "2025-12-14T04:41:51.458Z",
+  "producer": {
+    "id": "cmj58mwyf0000il9kqvfa5jot",
+    "role": "producer",
+    "name": "Produtor Demo",
+    "phone": "+5511999990001",
+    "email": "produtor@demo.local",
+    "lat": -22.9068,
+    "lng": -43.1729,
+    "createdAt": "2025-12-14T04:41:51.446Z",
+    "updatedAt": "2025-12-14T04:41:51.446Z"
+  },
+  "buyer": {
+    "id": "cmj58mwyi0001il9kvx2fhekm",
+    "role": "buyer",
+    "name": "Comprador Demo",
+    "phone": "+5511999990002",
+    "email": "comprador@demo.local",
+    "lat": -22.9035,
+    "lng": -43.2096,
+    "createdAt": "2025-12-14T04:41:51.450Z",
+    "updatedAt": "2025-12-14T04:41:51.450Z"
+  },
+  "product": {
+    "id": "cmj58j5o500019t9k7pk9d5ov",
+    "name": "Alface",
+    "unit": "unidade",
+    "category": "hortifruti",
+    "createdAt": "2025-12-14T04:38:56.117Z"
+  },
+  "offer": {
+    "id": "cmj58mwym0002il9kk6v1iwdu",
+    "userId": "cmj58mwyf0000il9kqvfa5jot",
+    "productId": "cmj58j5o500019t9k7pk9d5ov",
+    "qty": 120,
+    "window": "semana",
+    "lat": -22.9068,
+    "lng": -43.1729,
+    "createdAt": "2025-12-14T04:41:51.454Z"
+  },
+  "demand": {
+    "id": "cmj58mwyn0003il9kkfevjsep",
+    "userId": "cmj58mwyi0001il9kvx2fhekm",
+    "productId": "cmj58j5o500019t9k7pk9d5ov",
+    "qty": 80,
+    "window": "semana",
+    "lat": -22.9035,
+    "lng": -43.2096,
+    "createdAt": "2025-12-14T04:41:51.455Z"
+  },
+  "match": {
+    "id": "cmj58mwyo0004il9kdtje31yj",
+    "offerId": "cmj58mwym0002il9kk6v1iwdu",
+    "demandId": "cmj58mwyn0003il9kkfevjsep",
+    "status": "pending",
+    "windowFit": 0.9,
+    "distanceKm": 3.78,
+    "riskScore": 0.2,
+    "rationale": "[\"product=Alface\",\"qty_offer=120 qty_demand=80\",\"window_fit=0.9\",\"distance_km≈3.78\",\"risk=0.2 (mock)\"]",
+    "createdAt": "2025-12-14T04:41:51.456Z"
+  },
+  "guidance": {
+    "id": "cmj58mwyp0005il9kb8sill2p",
+    "matchId": "cmj58mwyo0004il9kdtje31yj",
+    "coldChainRequired": true,
+    "recommendedTempRange": "0-4C",
+    "maxTransitHours": 12,
+    "handlingNotes": "Manter refrigerado",
+    "incompatibilities": [
+      "Odor forte"
+    ],
+    "suggestedPriceMin": 14.27,
+    "suggestedPriceMax": 15.98,
+    "explanation": "CEPEA(mock)=10 + logistics(2.27) + risk(2)",
+    "routeSteps": [
+      "Partida: (-22.91, -43.17)",
+      "Siga pela rota rodoviária sugerida (mock) por ~3.78 km",
+      "Chegada: (-22.9, -43.21)"
+    ],
+    "durationMin": 3.78,
+    "distanceKm": 3.78,
+    "createdAt": "2025-12-14T04:41:51.457Z"
+  }
+}

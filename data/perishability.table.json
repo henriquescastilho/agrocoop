@@ -1,0 +1,5 @@
+{
+  "Tomate":{"cold_chain_required":false,"recommended_temp_range":"10-13C","max_transit_hours":24,"handling_notes":"Evitar esmagamento","incompatibilities":["Etileno alto"]},
+  "Alface":{"cold_chain_required":true,"recommended_temp_range":"0-4C","max_transit_hours":12,"handling_notes":"Manter refrigerado","incompatibilities":["Odor forte"]},
+  "Banana":{"cold_chain_required":false,"recommended_temp_range":"13-15C","max_transit_hours":24,"handling_notes":"Evitar frio excessivo","incompatibilities":["Etileno alto"]}
+}

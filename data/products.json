@@ -1,0 +1,22 @@
+[
+  {"name":"Tomate","unit":"kg","category":"hortifruti"},
+  {"name":"Alface","unit":"unidade","category":"hortifruti"},
+  {"name":"Cenoura","unit":"kg","category":"hortifruti"},
+  {"name":"Batata","unit":"kg","category":"hortifruti"},
+  {"name":"Cebola","unit":"kg","category":"hortifruti"},
+  {"name":"Banana","unit":"kg","category":"fruta"},
+  {"name":"Laranja","unit":"kg","category":"fruta"},
+  {"name":"Maçã","unit":"kg","category":"fruta"},
+  {"name":"Mamão","unit":"unidade","category":"fruta"},
+  {"name":"Manga","unit":"kg","category":"fruta"},
+  {"name":"Ovos","unit":"caixa","category":"proteina"},
+  {"name":"Leite","unit":"litro","category":"laticinio"},
+  {"name":"Queijo Minas","unit":"kg","category":"laticinio"},
+  {"name":"Feijão","unit":"kg","category":"grao"},
+  {"name":"Arroz","unit":"kg","category":"grao"},
+  {"name":"Farinha de Mandioca","unit":"kg","category":"grao"},
+  {"name":"Frango","unit":"kg","category":"proteina"},
+  {"name":"Carne Bovina","unit":"kg","category":"proteina"},
+  {"name":"Peixe","unit":"kg","category":"proteina"},
+  {"name":"Iogurte","unit":"unidade","category":"laticinio"}
+]

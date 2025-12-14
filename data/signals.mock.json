@@ -1,0 +1,5 @@
+{
+  "timestamp": "2025-12-14T00:00:00.000Z",
+  "sources": {"INMET":"mock","CONAB":"mock","CEPEA":"mock"},
+  "notes": "Hackathon mock snapshot"
+}

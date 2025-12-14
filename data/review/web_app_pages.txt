@@ -1,0 +1,192 @@
+
+===== apps/web/app/dashboard/page.tsx =====
+import React from "react";
+
+type MetaResponse = {
+  signalsTimestamp: string | null;
+  counts: { products: number; offers: number; demands: number; matches: number };
+};
+
+type MatchResponse = {
+  matches: {
+    id: string;
+    status: string;
+    product: { id: string; name: string; unit: string };
+    offer: {
+      qty: number;
+      location: { lat: number | null; lng: number | null };
+      user: { name: string | null; role: string };
+    };
+    demand: {
+      qty: number;
+      location: { lat: number | null; lng: number | null };
+      user: { name: string | null; role: string };
+    };
+    distanceKm: number | null;
+    guidance: {
+      coldChainRequired: boolean;
+      suggestedPriceRange: { min: number; max: number } | null;
+      recommendedTempRange: string | null;
+      maxTransitHours: number | null;
+    } | null;
+  }[];
+};
+
+const base = process.env.API_BASE_URL ?? "http://localhost:4000";
+const fetchOpts = { cache: "no-store" as const };
+
+async function getMeta(): Promise<MetaResponse | null> {
+  try {
+    const res = await fetch(`${base}/api/meta`, fetchOpts);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function getMatches(): Promise<MatchResponse | null> {
+  try {
+    const res = await fetch(`${base}/api/matches`, fetchOpts);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export default async function DashboardPage() {
+  const [meta, matchesData] = await Promise.all([getMeta(), getMatches()]);
+  const matches = matchesData?.matches ?? [];
+
+  const kpiCardStyle: React.CSSProperties = {
+    border: "1px solid #d9e2ec",
+    borderRadius: 8,
+    padding: "12px 14px",
+    background: "#f7f9fb",
+    minWidth: 140,
+  };
+
+  const matchCardStyle: React.CSSProperties = {
+    border: "1px solid #d9e2ec",
+    borderRadius: 10,
+    padding: 14,
+    background: "#fff",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+  };
+
+  return (
+    <main style={{ padding: 24, fontFamily: "system-ui", background: "#f4f6f8" }}>
+      <header style={{ marginBottom: 20 }}>
+        <h1 style={{ margin: 0 }}>AgroCoop MVP</h1>
+        <p style={{ margin: "6px 0 0", color: "#4b5563" }}>
+          Hackathon demo: quem vende, quem compra, produto, rota, risco/custo em um lugar só.
+        </p>
+      </header>
+
+      <section style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+        <div style={kpiCardStyle}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Produtos</div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>{meta?.counts.products ?? "—"}</div>
+        </div>
+        <div style={kpiCardStyle}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Ofertas</div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>{meta?.counts.offers ?? "—"}</div>
+        </div>
+        <div style={kpiCardStyle}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Demandas</div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>{meta?.counts.demands ?? "—"}</div>
+        </div>
+        <div style={kpiCardStyle}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Matches</div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>{meta?.counts.matches ?? "—"}</div>
+        </div>
+        <div style={kpiCardStyle}>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Dados públicos</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>
+            {meta?.signalsTimestamp ? `Snapshot: ${meta.signalsTimestamp}` : "Sem snapshot"}
+          </div>
+        </div>
+      </section>
+
+      <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <h2 style={{ margin: 0 }}>Matches</h2>
+        <span style={{ color: "#6b7280", fontSize: 13 }}>
+          Valor visível: vendedor → comprador · produto · distância · frio · preço sugerido
+        </span>
+      </section>
+
+      {matches.length === 0 ? (
+        <div style={{ color: "#6b7280" }}>Nenhum match ainda. Rode o demo ou crie ofertas/demandas.</div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          {matches.map((m) => {
+            const priceRange = m.guidance?.suggestedPriceRange
+              ? `R$ ${m.guidance.suggestedPriceRange.min.toFixed(2)} - R$ ${m.guidance.suggestedPriceRange.max.toFixed(2)}`
+              : "Sem faixa";
+            const distance = m.distanceKm != null ? `${m.distanceKm.toFixed(1)} km` : "n/d";
+            const cold = m.guidance?.coldChainRequired ? "⚠️ Refrigeração" : "✔️ Sem frio";
+            return (
+              <div key={m.id} style={matchCardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontWeight: 700 }}>
+                    {m.product.name} ({m.product.unit})
+                  </div>
+                  <div
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                      background: m.status === "accepted" ? "#e0f2fe" : m.status === "declined" ? "#fee2e2" : "#f3f4f6",
+                      color: "#111827",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {m.status}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 8, fontSize: 14, color: "#374151" }}>
+                  <strong>Vende:</strong> {m.offer.user.name ?? "Produtor"} ({m.offer.qty} {m.product.unit}) ·{" "}
+                  <strong>Compra:</strong> {m.demand.user.name ?? "Comprador"} ({m.demand.qty} {m.product.unit})
+                </div>
+
+                <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 10, fontSize: 13 }}>
+                  <span style={{ padding: "4px 8px", borderRadius: 6, background: "#eef2ff", color: "#4338ca" }}>
+                    Distância: {distance}
+                  </span>
+                  <span style={{ padding: "4px 8px", borderRadius: 6, background: "#fff7ed", color: "#c2410c" }}>
+                    {cold}
+                  </span>
+                  <span style={{ padding: "4px 8px", borderRadius: 6, background: "#ecfeff", color: "#0f766e" }}>
+                    Preço sugerido: {priceRange}
+                  </span>
+                  {m.guidance?.recommendedTempRange ? (
+                    <span style={{ padding: "4px 8px", borderRadius: 6, background: "#f3f4f6", color: "#111827" }}>
+                      Temp: {m.guidance.recommendedTempRange}
+                    </span>
+                  ) : null}
+                  {m.guidance?.maxTransitHours ? (
+                    <span style={{ padding: "4px 8px", borderRadius: 6, background: "#fef3c7", color: "#92400e" }}>
+                      Máx horas: {m.guidance.maxTransitHours}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </main>
+  );
+}
+
+===== apps/web/app/layout.tsx =====
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="pt-BR">
+      <body>{children}</body>
+    </html>
+  );
+}
