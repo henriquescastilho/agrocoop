@@ -31,7 +31,7 @@ WAHA_API_KEY="secret_key"
 WAHA_SESSION="agrocoop"
 
 # Google AI & Speech (Mesma chave)
-GOOGLE_API_KEY="AIzaSy..."
+GOOGLE_API_KEY="<sua_chave_google_api>"
 GOOGLE_SPEECH_LANGUAGE="pt-BR"
 GEMINI_MODEL="gemini-1.5-flash"  # Ou gemini-2.5-flash se disponível
 ```
