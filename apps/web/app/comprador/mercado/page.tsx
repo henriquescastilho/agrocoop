@@ -5,14 +5,34 @@ import { Card } from "@/components/ui/card";
 import { Store, Sprout, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { SimpleModal } from "@/components/ui/simple-modal";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function MercadoPage() {
     const [message, setMessage] = useState<string | null>(null);
+    const [selectedOffer, setSelectedOffer] = useState<{ id: number; product: string; producer: string } | null>(null);
+    const [bid, setBid] = useState("");
+
     const offers = [
         { id: 1, product: "Tomate Italiano", producer: "Sítio Vista Alegre", region: "Nova Friburgo", price: "R$ 4,50/kg", volume: "2 ton", quality: "Premium" },
         { id: 2, product: "Cenoura", producer: "Fazenda Sol Nascente", region: "Teresópolis", price: "R$ 2,20/kg", volume: "500 kg", quality: "Padrão" },
         { id: 3, product: "Alface Americana", producer: "Coop. Verde Vale", region: "Petrópolis", price: "R$ 1,80/un", volume: "1000 un", quality: "Orgânico" },
     ];
+
+    const handleNegotiateClick = (offer: any) => {
+        setSelectedOffer(offer);
+        setBid("");
+    }
+
+    const confirmNegotiation = () => {
+        if (!bid) {
+            setMessage("Informe um valor para a proposta.");
+            return;
+        }
+        setMessage(`Proposta de ${bid} enviada para ${selectedOffer?.producer}.`);
+        setSelectedOffer(null);
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -50,17 +70,40 @@ export default function MercadoPage() {
                             <Badge variant="outline" className="border-agro-green text-agro-green bg-agro-green/5">
                                 {offer.quality}
                             </Badge>
-                            </div>
+                        </div>
 
                         <Button
                             className="bg-agro-sky text-sky-950 hover:bg-agro-sky/90"
-                            onClick={() => setMessage(`Negociação iniciada com ${offer.producer} para ${offer.product}.`)}
+                            onClick={() => handleNegotiateClick(offer)}
                         >
                             Negociar <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Card>
                 ))}
             </div>
+
+            <SimpleModal
+                isOpen={!!selectedOffer}
+                onClose={() => setSelectedOffer(null)}
+                title={`Negociar ${selectedOffer?.product}`}
+                description={`Enviar contraproposta para ${selectedOffer?.producer}`}
+            >
+                <div className="space-y-4">
+                    <div className="grid gap-2">
+                        <Label className="text-zinc-700">Sua Oferta</Label>
+                        <Input
+                            placeholder="Ex: R$ 4,20/kg"
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
+                            value={bid}
+                            onChange={(e) => setBid(e.target.value)}
+                        />
+                    </div>
+                    <div className="pt-2 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setSelectedOffer(null)} className="text-zinc-700 border-zinc-200 hover:bg-zinc-50">Cancelar</Button>
+                        <Button className="bg-agro-sky text-sky-950 hover:bg-agro-sky/90" onClick={confirmNegotiation}>Enviar Proposta</Button>
+                    </div>
+                </div>
+            </SimpleModal>
         </div>
     );
 }

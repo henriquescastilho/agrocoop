@@ -303,24 +303,26 @@ export default function DashboardPage() {
             >
                 <div className="space-y-4">
                     <div className="grid gap-2">
-                        <Label>Sua Proposta de Preço (R$/kg)</Label>
+                        <Label className="text-zinc-700">Sua Proposta de Preço (R$/kg)</Label>
                         <Input
                             value={negotiationData.price}
                             onChange={(e) => setNegotiationData({ ...negotiationData, price: e.target.value })}
                             placeholder="Ex: 2,30"
                             type="number"
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label>Justificativa (Opcional)</Label>
+                        <Label className="text-zinc-700">Justificativa (Opcional)</Label>
                         <Input
                             value={negotiationData.reason}
                             onChange={(e) => setNegotiationData({ ...negotiationData, reason: e.target.value })}
                             placeholder="Ex: Qualidade superior, custo logístico..."
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="outline" onClick={() => setShowNegotiationModal(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowNegotiationModal(false)} className="text-zinc-700 border-zinc-200 hover:bg-zinc-50">Cancelar</Button>
                         <Button className="bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={confirmNegotiation}>
                             Enviar Proposta
                         </Button>
@@ -336,43 +338,47 @@ export default function DashboardPage() {
             >
                 <div className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="product">Produto (Obrigatório)</Label>
+                        <Label htmlFor="product" className="text-zinc-700">Produto (Obrigatório)</Label>
                         <Input
                             id="product"
                             placeholder="Ex: Tomate Italiano"
                             value={harvestData.product}
                             onChange={(e) => setHarvestData({ ...harvestData, product: e.target.value })}
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="qty">Quantidade Disponível</Label>
+                        <Label htmlFor="qty" className="text-zinc-700">Quantidade Disponível</Label>
                         <Input
                             id="qty"
                             placeholder="Ex: 500 kg"
                             value={harvestData.qty}
                             onChange={(e) => setHarvestData({ ...harvestData, qty: e.target.value })}
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="window">Janela de Retirada (Opcional)</Label>
+                        <Label htmlFor="window" className="text-zinc-700">Janela de Retirada (Opcional)</Label>
                         <Input
                             id="window"
                             placeholder="Ex: 15/12 a 20/12"
                             value={harvestData.window}
                             onChange={(e) => setHarvestData({ ...harvestData, window: e.target.value })}
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="notes">Observações</Label>
+                        <Label htmlFor="notes" className="text-zinc-700">Observações</Label>
                         <Input
                             id="notes"
                             placeholder="Ex: Precisa de refrigeração leve"
                             value={harvestData.notes}
                             onChange={(e) => setHarvestData({ ...harvestData, notes: e.target.value })}
+                            className="bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400"
                         />
                     </div>
                     <div className="pt-2 flex gap-2">
-                        <Button variant="outline" className="w-full" onClick={() => setShowHarvestModal(false)}>Cancelar</Button>
+                        <Button variant="outline" className="w-full text-zinc-700 border-zinc-200 hover:bg-zinc-50" onClick={() => setShowHarvestModal(false)}>Cancelar</Button>
                         <Button className="w-full bg-agro-green text-agro-dark hover:bg-agro-green/90" onClick={confirmHarvest}>
                             Confirmar
                         </Button>
